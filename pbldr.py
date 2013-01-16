@@ -1,84 +1,16 @@
 #!/usr/bin/env python
 # encoding: utf-8
-#
-# ============================================================================
-# package.py -- Intro
-# ============================================================================
-#
-# This script builds arch packages in a clean chroot and places them into a
-# pacman repository.
-#
-# :: NOTICE ::
-#
-# This script requires a specific directory structure and configuration file
-# (config.json) in order to operate properly.
-#
-# ============================================================================
-# Directory structure
-# ============================================================================
-#
-# <repo_name>/
-# |--archiso/
-# |--|--i686/
-# |--|--x86_64/
-# |--devsrc/
-# |--|--<package1>/
-# |--|--|--PKGBUILD
-# |--stage/
-# |--|--<package-version>/
-# |--|--|--{i686,x86_64,sources}/
-# |--depends/
-# |--|--<dependency1>
-# |--|--|--<dependency1.pkg.tar.xz
-# |--{community,core,extra,multilib}/
-#
-# [archiso]
-#
-# This is a special directory containing a repository to be compatible with the
-# current archiso release. For example, the ZFS packages require a specific
-# kernel version to function. When booting into the archiso to rescue a ZFS
-# filesystem, it would then be necessary to install the ZFS kernel modules for
-# the kernel contained in the archiso. As of Decemember 2012 this is kernel
-# 3.6.8. This repository should track the current archiso release.
-#
-# [devsrc]
-#
-# These are the development sources to the packages of the repository. It is
-# useful to have them in the same directory as the repository so that the
-# entire repository can be versioned with a DVCS such as git.
-#
-# [community|core|extra|multilib]
-#
-# Arch linux has these repositories as default, and this script mimics them. So
-# if you think your package should be part of the community repo, like most
-# are, then it will be saved in the community directory as long as it is
-# configured in the configuration file.
-#
-# [stage]
-#
-# When packages are built, the complied output is saved to the stage directory
-# under the name of the package and version number. The reason for the stage is
-# to allow the packager to first inspect the package and package signatures to
-# determine correctness. Once correctness has been verified, the package.py can
-# be used to add the packages to the repository. Once this is done, the
-# packages in the stage directory are removed.
+"""
+pbldr.py is a packaging tool for Arch Linux. Drop pbldr.py into a compatible
+project directory and it make building and packaging packages for Arch Linux a
+breeze. pbldr.py can build 32bit and 64bit packages pbldr.py build in a clean
+system chroot, so no changes are made to your development system.
 
-# [Hosting the project directory]
-#
-# This entire project directory can then be hosted on a webserver to allow
-# users to add your signed repository to their pacman.conf using the following
-# configuration:
-#
-# [<repo_name>]
-# http://mycoolwebpage.com/$repo/$arch
-#
-# archiso users, the can use the following:
-#
-# [<repo_name>]
-# http://mycoolwebpage.com/$repo/archiso/$arch
-#
+Copyright (c) 2013, Jesus Alvarez <jeezusjr@gmail.com>
+License: MIT (See LICENSE for details)
+"""
 
-
+# IMPORTS {{{
 import argparse
 import subprocess
 import os
@@ -88,19 +20,15 @@ import datetime
 import sys
 import glob
 import json
-import getpass
-
 
 # Setup logging
 from logging import Formatter, getLogger, StreamHandler
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # }}}
 
 
-# Set the logging level, possible values include DEBUG, INFO, WARNING, ERROR,
-# and CRITICAL
+# GLOBALS {{{
 # Prefix for logging output
 PREFIX = '[>>>]'
-
 
 # Dependency script for getting a list of dependencies the package depends on
 # Many scripts use bash to determine the dependencies based on architectures,
@@ -124,50 +52,30 @@ for march in "${arches[@]}"; do
 done
 """
 
-
 # Documentation for ansi escape sequences.
 # http://bluesock.org/~willg/dev/ansi.html#sequences
 # http://en.wikipedia.org/wiki/ANSI_escape_code
 # http://docs.python.org/reference/lexical_analysis.html
 # `\033[` is the escape sequence character. `\033` is octal.
 ATTR_CODES = {
-    'bold': '1',
-    'italic': '3',
-    'strike': '9',
-    'underline': '4',
+    'bold': '1', 'italic': '3', 'strike': '9', 'underline': '4',
     'erase': '\033[K',  # Clear to the end of the line
     'reset': '\033[0m',  # All attributes off
 }
 
-
 FG_COLOR_CODES = {
-    'black': 30,
-    'red': 31,
-    'green': 32,
-    'yellow': 33,
-    'blue': 34,
-    'magenta': 35,
-    'cyan': 36,
-    'white': 37,
-    'default': 38,
+    'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34, 'magenta':
+    35, 'cyan': 36, 'white': 37, 'default': 38,
 }
-
 
 BG_COLOR_CODES = {
-    'bgred': 41,
-    'bgblack': 40,
-    'bggreen': 42,
-    'bgyellow': 43,
-    'bgblue': 44,
-    'bgmagenta': 45,
-    'bgcyan': 46,
-    'bgwhite': 47,
-    'bgdefault': 49,
-    'bggrey': 100,
-}
+    'bgred': 41, 'bgblack': 40, 'bggreen': 42, 'bgyellow': 43, 'bgblue': 44,
+    'bgmagenta': 45, 'bgcyan': 46, 'bgwhite': 47, 'bgdefault': 49, 'bggrey':
+    100,
+}  # }}}
 
 
-def ansi_builder(text, fgcolor, bgcolor, attr):
+def ansi_builder(text, fgcolor, bgcolor, attr):  # {{{
     """Wrap text in an ansi escape sequence, with bolding.
 
     :color: The color to wrap the text in.
@@ -194,7 +102,6 @@ def ansi_builder(text, fgcolor, bgcolor, attr):
     # print('033[{}m{}{}'.format(ccds[:-1], text, ATTR_CODES['reset'][1:]))
 
     return '\033[{}m{}{}'.format(ccds[:-1], text, ATTR_CODES['reset'])
-
 
 OUTPUT_PREFIX = ansi_builder(PREFIX, 'cyan', '', 'bold') + ': '
 
@@ -326,10 +233,10 @@ def log(text):
     :text: The message to write to stdout.
 
     """
-    _logger(text, date=False, prefix=True)
+    _logger(text, date=False, prefix=True)  # }}}
 
 
-def set_new_sums(package_path):
+def set_new_sums(package_path):  # {{{
     """Get new sums and change in the PKGBUILD
 
     :package_path: The path to the PKGBUILD for the package.
@@ -369,10 +276,10 @@ def set_new_sums(package_path):
     else:
         log('Hashes up-to-date for ' + pkg)
     os.chdir(orig_dir)
-    logger.debug('Changed dir: ' + orig_dir)
+    logger.debug('Changed dir: ' + orig_dir)  # }}}
 
 
-def get_pkgbuild_version(package_path):
+def get_pkgbuild_version(package_path):  # {{{
     """Get the version number for package from the PKGBUILD.
 
     :package_path: The path containing the PKGBUILD.
@@ -384,10 +291,10 @@ def get_pkgbuild_version(package_path):
     # TODO: Sat Jan 12 08:35:48 PST 2013: Merge these two regexs
     pkgver = re.findall(r'pkgver=([\d\w.]+)\n', pkgb)
     pkgrel = re.findall(r'pkgrel=(\d+)\n', pkgb)
-    return pkgver[0] + '-' + pkgrel[0] or ''
+    return pkgver[0] + '-' + pkgrel[0] or ''  # }}}
 
 
-def exec_dependency_getter():
+def exec_dependency_getter():  # {{{
     """Creates a temporary script to source the PKGBUILD for package to
     retrieve its dependencies.
 
@@ -411,17 +318,19 @@ def exec_dependency_getter():
         logger.error('Error: could not execute dep_getter.sh')
         sys.exit(1)
     os.remove('dep_getter.sh')
-    return sout
+    return sout  # }}}
 
 
-def check_user_root():
+def check_user_root():  # {{{
     """Checks to see if the script is being ran as user root.
 
     :returns: True if the script is being ran as root, otherwise false.
 
     """
-    return False if not os.getuid() == 0 else True
+    return False if not os.getuid() == 0 else True  # }}}
 
+
+# HELP {{{
 aname = ansi_builder('package.py -- Magically build and add packages to an '
                      'Arch Linux package repository.', 'yellow', 'bgcyan',
                      'bold')
@@ -460,14 +369,14 @@ NONE
 
 Optional arguments for the 'repo' command:
 NONE"""
+# }}}
 
 
-# Script globals
-class App:
+class App:  # {{{
     """The application storage object.
 
     """
-    def __init__(self):
+    def __init__(self):  # {{{
         self.args = None
         # Tracks properties of each package being processed
         self.packages = {}  # Set in load_configuration
@@ -512,9 +421,9 @@ class App:
         elif self.args.subparser_name == 'source':
             self.source()
         elif self.args.subparser_name == 'repo':
-            self.repo()
+            self.repo()  # }}}
 
-    def load_configuration(self):
+    def load_configuration(self):  # {{{
         """Loads the json configuration in the same directory.
 
         """
@@ -531,9 +440,9 @@ class App:
         self.log_level = jobj['LogLevel']
         self.chroot_path = jobj['ChrootPath']
         self.chroot_copy = jobj['ChrootCopy']
-        self.repo_path = jobj['RepoPath']
+        self.repo_path = jobj['RepoPath']  # }}}
 
-    def argparser(self):
+    def argparser(self):  # {{{
         """Parses the script arguments with argparse.
 
         """
@@ -556,9 +465,9 @@ class App:
 
         if len(sys.argv) == 1 or self.args.help:
             print(usage)
-            sys.exit(1)
+            sys.exit(1)  # }}}
 
-    def chroot_clean(self):
+    def chroot_clean(self):  # {{{
         """Creates a clean chroot.
 
         """
@@ -575,9 +484,9 @@ class App:
                                     '-x', cdir + '/root/', copydir])
             if proc > 0:
                 logger.critcal('Error: could not create clean chroot!')
-                sys.exit(1)
+                sys.exit(1)  # }}}
 
-    def chroot_install_local_dependencies(self, package, arch):
+    def chroot_install_local_dependencies(self, package, arch):  # {{{
         """Install pre-built packages from the stage or depends.
 
         :package: The name of the package.
@@ -599,9 +508,9 @@ class App:
                 i_pkg_list.append(dep)
         if i_pkg_list:
             logger.debug('Dependencies to install: ' + str(i_pkg_list))
-            self.chroot_install_packages(i_pkg_list, arch)
+            self.chroot_install_packages(i_pkg_list, arch)  # }}}
 
-    def chroot_install_packages(self, packages, arch):
+    def chroot_install_packages(self, packages, arch):  # {{{
         """Installs the packages passed as arguments into the chroot.
 
         :packages: The list of packages to install.
@@ -650,8 +559,9 @@ class App:
             proc = subprocess.call(cmd)
             if proc > 0:
                 logger.warning('There was a problem removing the package!')
+    # }}}
 
-    def get_depends_list(self, package):
+    def get_depends_list(self, package):  # {{{
         """The return value is a dictionary with dependency lists for i686 and
         x86_64.
 
@@ -676,9 +586,9 @@ class App:
                 self.packages[package]['deps'][arch].extend(dep.split('\n'))
         os.chdir(orig_dir)
         logger.debug('Changed dir: ' + orig_dir)
-        return self.packages[package]['deps']
+        return self.packages[package]['deps']  # }}}
 
-    def check_for_built_packages(self):
+    def check_for_built_packages(self):  # {{{
         """Check if package has been built and is stored in the stage
         directory.
 
@@ -709,9 +619,9 @@ class App:
                     else:
                         logger.debug('Answered no to overwrite')
                         log('Keeping ' + pkg_full_path)
-                        self.packages[pkg]['overwrite'] = False
+                        self.packages[pkg]['overwrite'] = False  # }}}
 
-    def move_package_to_stage(self, package, arch):
+    def move_package_to_stage(self, package, arch):  # {{{
         """Moves a newly built package to stage/.
 
         :package: The name of the package to move.
@@ -745,9 +655,9 @@ class App:
         logger.info(mvcmd)
         proc = subprocess.call(mvcmd, shell=True)
         if proc > 1:
-            logger.warning('Error: could not move the package to stage')
+            logger.warning('Error: could not move the package to stage')  # }}}
 
-    def move_source_to_stage(self, package):
+    def move_source_to_stage(self, package):  # {{{
         """Moves a newly built package source to stage/.
 
         :package: The package name.
@@ -776,9 +686,9 @@ class App:
         logger.info(mvcmd)
         proc = subprocess.call(mvcmd, shell=True, stderr=subprocess.DEVNULL)
         if proc > 1:
-            logger.warning('Error: could not move package source')
+            logger.warning('Error: could not move package source')  # }}}
 
-    def gpg_sign_packages(self):
+    def gpg_sign_packages(self):  # {{{
         """Signs all built packages.
 
         """
@@ -799,9 +709,9 @@ class App:
                 if proc > 0:
                     logger.warning('There was a problem signing ' + pkg)
                 os.chdir(orig_dir)
-                logger.debug('Changed dir: ' + orig_dir)
+                logger.debug('Changed dir: ' + orig_dir)  # }}}
 
-    def get_local_dependency(self, name, version, arch):
+    def get_local_dependency(self, name, version, arch):  # {{{
         """Returns a path to a dependency package.
 
         This function searches depends/ and stage/ only.
@@ -829,9 +739,9 @@ class App:
         for dirp, _, files in os.walk(dep_path):
             for f in files:
                 if re.match(repat, f):
-                    return os.path.join(dirp, f)
+                    return os.path.join(dirp, f)  # }}}
 
-    def build(self):
+    def build(self):  # {{{
         """Builds the packages in the devsrc directory.
 
         """
@@ -841,9 +751,9 @@ class App:
                     continue
                 self.build_package(pkg, arch)
         self.gpg_sign_packages()
-        self.clean_up()
+        self.clean_up()  # }}}
 
-    def build_package(self, package, arch):
+    def build_package(self, package, arch):  # {{{
         """Build a package for the targeted architecture.
 
         :package: The package to build.
@@ -903,17 +813,18 @@ class App:
         proc = subprocess.call(rmcmd, shell=True)
         if proc > 1:
             logger.warning('There was a problem cleaning the working files')
+    # }}}
 
-    def source(self):
+    def source(self):  # {{{
         """Builds the source to the packages in the devsrc directory.
 
         """
         for pkg in self.build_order:
             if self.args.p and pkg not in self.args.p:
                 continue
-            self.build_source_package(pkg)
+            self.build_source_package(pkg)  # }}}
 
-    def build_source_package(self, package):
+    def build_source_package(self, package):  # {{{
         """Build package source for package.
 
         :package: The package to build.
@@ -932,9 +843,9 @@ class App:
         logger.debug('Changed dir: ' + orig_dir)
         if proc > 0:
             logger.warning('Error: Could not build source package')
-        self.move_source_to_stage(package)
+        self.move_source_to_stage(package)  # }}}
 
-    def add_package_to_repo(self, package, arch):
+    def add_package_to_repo(self, package, arch):  # {{{
         """Adds a package to a repository set in the config.
 
         :package: The package to add.
@@ -986,9 +897,9 @@ class App:
         if proc > 0:
             logger.warning('Error: could not add the package to the repo')
         os.chdir(orig_dir)
-        logger.debug('Changed dir: ' + orig_dir)
+        logger.debug('Changed dir: ' + orig_dir)  # }}}
 
-    def repo(self):
+    def repo(self):  # {{{
         """Repo subcommand function. Adds built packages to a repository.
 
         """
@@ -996,10 +907,11 @@ class App:
             for pkg in self.build_order:
                 if self.args.p and pkg not in self.args.p:
                     continue
-                self.add_package_to_repo(pkg, arch)
+                self.add_package_to_repo(pkg, arch)  # }}}
+# }}}
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # {{{
     try:
         user = os.getuid()
         App()
@@ -1008,4 +920,4 @@ if __name__ == '__main__':
         log('\nToodles')
     finally:
         if not os.getuid() == user:
-            os.setuid(user)
+            os.setuid(user)  # }}}
