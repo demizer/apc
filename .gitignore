@@ -1,0 +1,5 @@
+*!
+*.pyc
+/_build_/
+/__pycache__/
+*.bak
