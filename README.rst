@@ -2,7 +2,7 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 11:28:31 PST 2013
+:Modified: Sat Jan 19 11:33:40 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
@@ -132,8 +132,8 @@ SigningKey:
     pbldr signs all packages and repositories. This value is the KeyID of your
     GPG key.
 
-RepoName:
-    The default repo to use incase a repo target '-t' is not specified.
+DefaultRepoTarget:
+    The default repo target to use incase a repo target '-t' is not specified.
 
 Example config.json
 -------------------
@@ -152,7 +152,7 @@ Example config.json
             "ChrootPath": "/opt/chroot",
             "ChrootCopyName": "zfs",
             "SigningKey": "0EE7A126",
-            "RepoName": "core"
+            "DefaultRepoTarget": "core"
         }
     ]
 
@@ -166,10 +166,14 @@ the configuration file.
 Repositories
 ============
 
-Arch linux has these repositories as default, and this script mimics them. So
-if you think your package should be part of the community repo, like most are,
-then it will be saved in the community directory as long as it is configured in
-the configuration file.
+pbldr uses the name of the directory it is executed from as the name of the
+repository when adding packages to a repository.
+
+DefaultRepoTarget is use as the default repository target in case the '-t'
+argument is not used with the repo subcommand of pbldr.
+
+In the directory structure example above, the core, archiso, and testing
+directories are repository directories, and thus, repository targets.
 
 stage
 =====
