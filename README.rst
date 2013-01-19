@@ -2,7 +2,7 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 11:33:40 PST 2013
+:Modified: Sat Jan 19 11:35:23 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
@@ -83,13 +83,18 @@ Example directory structure
     │   └── x86_64
     └── config.json
 
-The repository name
-===================
+Repositories
+============
 
-The basename of the directory pbldr used in is the name that will be used when
-refering to the repository name.
+pbldr uses the name of the directory it is executed from as the name of the
+repository when adding packages to a repository. In the example directory
+structure above the repository name is 'archzfs'.
 
-In the example directory structure above, this name is "archzfs".
+DefaultRepoTarget is use as the default repository target in case the '-t'
+argument is not used with the repo subcommand of pbldr.
+
+In the directory structure example above, the core, archiso, and testing
+directories are repository directories, and thus, repository targets.
 
 config.json
 ===========
@@ -162,18 +167,6 @@ Devsrc
 The devsrc directory contains the package sources for building. All
 subdirectories in devsrc will be built if PackageBuildOrder is not specified in
 the configuration file.
-
-Repositories
-============
-
-pbldr uses the name of the directory it is executed from as the name of the
-repository when adding packages to a repository.
-
-DefaultRepoTarget is use as the default repository target in case the '-t'
-argument is not used with the repo subcommand of pbldr.
-
-In the directory structure example above, the core, archiso, and testing
-directories are repository directories, and thus, repository targets.
 
 stage
 =====
