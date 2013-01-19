@@ -2,7 +2,7 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 11:23:51 PST 2013
+:Modified: Sat Jan 19 11:28:31 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
@@ -186,6 +186,16 @@ compressed archive to make sure I didn't miss anything and that there are no
 errors.
 
 This is also a great time to use namcap_.
+
+Dependency search
+=================
+
+Any dependencies that are required by the package should be copied to the
+depends directory along with the signature file. pbldr first searches the stage
+directory looking for any dependencies, and lastly checks the depends
+directory. pbldr performs a signature check on the dependency to make sure it
+is a valid package. If the signature file is missing, the package is considered
+invalid.
 
 Chroot environments
 ===================
