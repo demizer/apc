@@ -2,7 +2,7 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 11:35:23 PST 2013
+:Modified: Sat Jan 19 11:45:14 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
@@ -90,8 +90,8 @@ pbldr uses the name of the directory it is executed from as the name of the
 repository when adding packages to a repository. In the example directory
 structure above the repository name is 'archzfs'.
 
-DefaultRepoTarget is use as the default repository target in case the '-t'
-argument is not used with the repo subcommand of pbldr.
+DefaultRepoTarget is used as the default repository target in case the '-t'
+argument is not used with the repo subcommand.
 
 In the directory structure example above, the core, archiso, and testing
 directories are repository directories, and thus, repository targets.
@@ -174,9 +174,9 @@ stage
 When packages are built, the complied output is saved to the stage directory
 under the name of the package and version number. The reason for the stage is
 to allow the packager to first inspect the package and package signatures to
-determine correctness. Once correctness has been verified, the pbldr can be
-used to add the packages to the repository. Once this is done, the packages in
-the stage directory are removed.
+determine correctness. Once correctness has been verified, pbldr can be used to
+add the packages to the repository. pbldr then deletes the packages from the
+stage after confirmation.
 
 What I like to do is open a few packages in vim and inspect the .PKGINFO in the
 compressed archive to make sure I didn't miss anything and that there are no
@@ -187,12 +187,17 @@ This is also a great time to use namcap_.
 Dependency search
 =================
 
-Any dependencies that are required by the package should be copied to the
-depends directory along with the signature file. pbldr first searches the stage
-directory looking for any dependencies, and lastly checks the depends
-directory. pbldr performs a signature check on the dependency to make sure it
-is a valid package. If the signature file is missing, the package is considered
-invalid.
+Any dependencies that are required by a package that are not in any of the
+official Arch Linux repositories should be copied to the depends directory
+along with the signature file.
+
+pbldr first searches the stage directory for any dependencies, if none are
+found, it finally searches the depends directory. If no matching packages are
+found still, the dependency is deferred to pacman at buildtime.
+
+If matching packages are found, pbldr performs a signature check on the
+dependency to make sure it is a valid package. If the signature file is
+missing, or the check is invalid, the package is considered invalid.
 
 Chroot environments
 ===================
