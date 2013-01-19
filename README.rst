@@ -2,12 +2,12 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 11:20:27 PST 2013
+:Modified: Sat Jan 19 11:23:51 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
 
-**This project is MIT licensed**
+*This project is MIT licensed*
 
 -----------------
 How does it work?
@@ -26,12 +26,6 @@ How does it work?
 * Built packages are saved to the stage directory.
 
 * The user then should inspect the output in the stage directory.
-
-  What I like to do is open a few packages in vim and inspect the .PKGINFO in
-  the compressed archive to make sure I didn't miss anything and that there are
-  no errors.
-
-  This is also a great time to use namcap_.
 
 * The repo subcommand can then be used to add packages from the stage to a
   targeted repository.
@@ -187,6 +181,12 @@ determine correctness. Once correctness has been verified, the pbldr can be
 used to add the packages to the repository. Once this is done, the packages in
 the stage directory are removed.
 
+What I like to do is open a few packages in vim and inspect the .PKGINFO in the
+compressed archive to make sure I didn't miss anything and that there are no
+errors.
+
+This is also a great time to use namcap_.
+
 Chroot environments
 ===================
 
@@ -216,16 +216,14 @@ directory structure defined in the following code block.
 .. code-block:: console
 
     # mkdir -p /opt/chroot/{i686,x86_64}
-    # setarch i686 mkarchroot -C "/usr/share/devtools/pacman-extra.conf" \
-      -M "/usr/share/devtools/makepkg-i686.conf" /opt/chroot/i686 base base-devel sudo
+    # setarch i686 mkarchroot -C "/usr/share/devtools/pacman-extra.conf" -M "/usr/share/devtools/makepkg-i686.conf" /opt/chroot/i686 base base-devel sudo
 
 Edit pacman.conf and makepkg.conf and adjust to your desire. Specifically, the
 packager and host fields.
 
 .. code-block:: console
 
-    # vim /opt/chroot/i686/root/etc/makepkg.conf \
-      /opt/chroot/i686/root/etc/pacman.conf
+    # vim /opt/chroot/i686/root/etc/makepkg.conf /opt/chroot/i686/root/etc/pacman.conf
 
 It is necessary to periodically perform updates to the chroot root copy, to do
 this, you will have to chroot into the root copy and perform the update. This
@@ -246,9 +244,7 @@ identical to the commands used to create the 32bit chroot environment.
 
 .. code-block:: console
 
-    # mkarchroot -C "/usr/share/devtools/pacman-multilib.conf" \
-      -M "/usr/share/devtools/makepkg-x86_64.conf" /opt/chroot/x86_64 base \
-      multilib-devel sudo
+    # mkarchroot -C "/usr/share/devtools/pacman-multilib.conf" -M "/usr/share/devtools/makepkg-x86_64.conf" /opt/chroot/x86_64 base multilib-devel sudo
 
 Edit pacman.conf and makepkg.conf and adjust to your desire. Specifically, the
 packager and host fields.
