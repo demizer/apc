@@ -79,7 +79,8 @@ def install_deps(chroot_path, package_obj):
         arch = obj['arch']
         pvers = package.version_from_path(pkg)
         pname = package.name_from_path(pkg)
-        if not _package_required(chroot_path, pname, pvers, arch):
+        if _package_required(chroot_path, pname, pvers, arch):
+            log(pname + ' is up-to-date in the chroot')
             continue
         _copy_package_to_chroot(chroot_path, pkg)
         install_package(chroot_path, pkg, arch)
@@ -104,12 +105,11 @@ def _package_required(chroot_path, package_name, package_version, arch):
 
     sout, serr, ret = util.run_with_output(cmd, True)
     if ret > 0:
+        logr.debug(sout.strip())
+        logr.debug('Return code: ' + str(ret))
         return False
 
     pvers = re.search('Version\s+:\s([\w\._-]+)\s', sout)
-    if not pvers:
-        return False
-
     if pvers.group(1) == package_version:
         return True
 

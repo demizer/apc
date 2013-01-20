@@ -31,7 +31,7 @@ def load_configuration():
             'log_level': jobj['LogLevel'] or '',
             'chroot_path': jobj['ChrootPath'] or '',
             'chroot_copyname': jobj['ChrootCopyName'] or '',
-            'repo_path': jobj['RepoPath'] or ''}
+            'repo_target': jobj['DefaultRepoTarget'] or ''}
 
 
 class App(dict):
