@@ -2,7 +2,7 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sat Jan 19 23:58:50 PST 2013
+:Modified: Sun Jan 20 00:06:39 PST 2013
 
 pbldr is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
@@ -42,7 +42,7 @@ How does it work?
 How to get pbldr
 ----------------
 
-pbldr is available in AUR (https://aur.archlinux.org/packages/pbldr/) via PyPI (http://pypi.python.org/pypi/pbldr/).
+pbldr is available in AUR (https://aur.archlinux.org/packages/python-pbldr/) via PyPI (http://pypi.python.org/pypi/pbldr/).
 
 -------------------
 Directory structure
