@@ -10,9 +10,9 @@ License: MIT (See LICENSE for details)
 import sys
 import argparse
 
-import app
-import logger
-from logger import log
+from pbldr import app
+from pbldr import logger
+from pbldr.logger import log
 
 logr = logger.getLogger(__name__)
 

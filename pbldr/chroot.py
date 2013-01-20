@@ -8,11 +8,9 @@ import sys
 import os
 import re
 
-import util
-import logger
-import package
-from util import run
-from logger import log
+from pbldr import util
+from pbldr import logger
+from pbldr.logger import log
 
 logr = logger.getLogger(__name__)
 
@@ -33,12 +31,12 @@ def clean(chroot_path, chroot_copyname):
         copydir = os.path.join(cdir, chroot_copyname + suffix)
         if not os.path.exists(copydir):
             log('Creating ' + copydir)
-            proc = run(['mkdir', '-p', copydir])
+            proc = util.run(['mkdir', '-p', copydir])
             if proc > 0:
                 logr.warning('Error: could not create directory')
         log('\nCreating clean chroot at ' + copydir + '...')
-        proc = run(['rsync', '-a', '--delete', '-q', '-W', '-x', cdir +
-                    '/root/', copydir])
+        proc = util.run(['rsync', '-a', '--delete', '-q', '-W', '-x', cdir +
+                         '/root/', copydir])
         if proc > 0:
             logr.critcal('Error: could not create clean chroot!')
             sys.exit(1)
@@ -57,7 +55,7 @@ def install_package(chroot_path, filepath, arch):
     log('Installing ' + fname)
     pcmd = 'pacman --needed -U /' + fname + ' --noconfirm'
     cmd = 'setarch {} mkarchroot -r "{}" {}'.format(arch, pcmd, chroot_path)
-    if run(cmd, True) > 0:
+    if util.run(cmd, True) > 0:
         logr.warning('There was a problem installing the package!')
         return False
     return True
@@ -77,8 +75,8 @@ def install_deps(chroot_path, package_obj):
     logr.debug('Dependencies to install: ' + str(deps))
     for pkg in deps:
         arch = obj['arch']
-        pvers = package.version_from_path(pkg)
-        pname = package.name_from_path(pkg)
+        pvers = _version_from_path(pkg)
+        pname = _name_from_path(pkg)
         if _package_required(chroot_path, pname, pvers, arch):
             log(pname + ' is up-to-date in the chroot')
             continue
@@ -134,7 +132,7 @@ def _get_dep_install_list(package_obj):
         else:
             pkgname = pkg
             pkgvers = ''
-        dep = package.find_local_dep(pkgname, pkgvers, obj['arch'])
+        dep = _find_local_dep(pkgname, pkgvers, obj['arch'])
         if dep:
             ilist.append(dep)
     return ilist
@@ -150,7 +148,66 @@ def _copy_package_to_chroot(chroot_path, filepath):
     """
     pname = os.path.basename(filepath)
     log('Copying ' + pname + ' to the chroot')
-    if run(['cp', filepath, os.path.join(chroot_path, pname)]) > 0:
+    if util.run(['cp', filepath, os.path.join(chroot_path, pname)]) > 0:
         logr.warning('Could not copy the package to the chroot!')
         return False
     return True
+
+
+def _find_local_dep(name, version, arch):
+    '''Returns a path to a dependency package.
+
+    This function searches depends/ or stage/ only.
+
+    :name: The name of the package.
+    :version: The expected version of the dependency.
+    :arch: The architecture of the package. If a package matches the name
+            and version but the arch is "any", it is a considered a match
+            and returned.
+
+    '''
+    ret = '{}-{}[-\d]+(?:{}|any).pkg.tar.xz(?!\.sig)'
+    repat = ret.format(name, version, arch)
+    logr.debug('Get dep regex: ' + repat)
+    stage_path = os.path.join(os.getcwd(), 'stage')
+    dep_path = os.path.join(os.getcwd(), 'depends')
+
+    # Walk the stage directory
+    for dirp, _, files in os.walk(stage_path):
+        for f in files:
+            if re.match(repat, f):
+                return os.path.join(dirp, f)
+
+    # Walk the depends directory
+    for dirp, _, files in os.walk(dep_path):
+        for f in files:
+            if re.match(repat, f):
+                return os.path.join(dirp, f)
+
+
+def _name_from_path(filepath):
+    """Returns the name of the package from a filepath.
+
+    :filepath: The path to the package file.
+    :returns: The human readable name for the filepath.
+
+    """
+    name = os.path.basename(filepath)
+    nre = re.search('([\w\.-]+)-[\w\.-]+-\d-(?:x86_64|i686|any).pkg.tar.xz',
+                    name)
+    if nre:
+        return nre.group(1)
+
+
+def _version_from_path(filepath):
+    """Returns the name of the package from a filepath.
+
+    :filepath: The path to the package file.
+    :returns: The human readable name for the filepath.
+
+    """
+    name = os.path.basename(filepath)
+    nre = re.search('[\w\.-]+-([\w\.-]+-\d)-(?:x86_64|i686|any).pkg.tar.xz',
+                    name)
+    if nre:
+        return nre.group(1)

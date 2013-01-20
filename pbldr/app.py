@@ -8,13 +8,11 @@ import os
 import json
 import sys
 
-
-import package
-import logger
-import chroot
-import util
-from logger import log, log_note
-
+from pbldr import package
+from pbldr import logger
+from pbldr import util
+from pbldr.chroot import clean
+from pbldr.logger import log, log_note
 
 logr = logger.getLogger(__name__)
 
@@ -79,7 +77,7 @@ class App(dict):
         '''
         package.existing_precheck(self)
         if self['args'].c:
-            chroot.clean(self['chroot_path'], self['chroot_copyname'])
+            clean(self['chroot_path'], self['chroot_copyname'])
 
         for _, obj in self['pkgs'].items():
             if self['args'].p and obj['name'] not in self['args'].p:
@@ -128,5 +126,5 @@ class App(dict):
         # self.cleanup('repo')
         # if mode == 'repo':
             # log('Deleting stage files')
-            # if run('rm -r {}/*'.format(spath), True) > 1:
+            # if util.run('rm -r {}/*'.format(spath), True) > 1:
                 # logr.warning('Error: could not remove stage files')

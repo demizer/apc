@@ -6,8 +6,9 @@ License: MIT (See LICENSE for details)
 '''
 import os
 import subprocess
-import logger
 import pwd
+
+from pbldr import logger
 
 logr = logger.getLogger(__name__)
 
