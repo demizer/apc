@@ -80,7 +80,7 @@ def get_gpg_agent_info(user):
         return ''
     with open(genv_path, 'r') as e_file:
         gpg_environ = e_file.read()
-    logr.debug('GPG_AGENT_INFO: ' + gpg_environ)
+    logr.debug('GPG_AGENT_INFO: ' + gpg_environ.strip())
     return gpg_environ.strip()
 
 
