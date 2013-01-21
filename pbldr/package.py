@@ -62,13 +62,14 @@ def _move_source_to_stage(package_obj):
 
     '''
     obj = package_obj
+    sdest = os.path.dirname(obj['dest'])
+    log('Moving {}*.src.tar.gz to {}'.format(obj['name'], sdest))
     try:
         src = glob.glob(os.path.join(obj['path'], '*.src.tar.gz'))[0]
     except IndexError:
         logr.warning('Could not find package source')
         return False
     logr.debug('Source glob: ' + str(src))
-    sdest = os.path.dirname(obj['dest'])
     log('Moving ' + obj['filename'] + ' to stage')
     if util.run('mv {} {}'.format(src, sdest), True, subprocess.DEVNULL) > 1:
         logr.warning('Error: could not move package source')
@@ -85,7 +86,9 @@ def _move_package_to_stage(package_obj):
 
     '''
     obj = package_obj
-    gpat = os.path.join(obj['path'], '*-' + obj['arch'] + '.pkg.tar.xz')
+    bdest = os.path.dirname(obj['dest'])
+    gpat = os.path.join(obj['path'], '*-*.pkg.tar.xz')
+    log('Moving {}*.pkg.tar.xz to {}'.format(obj['name'], bdest))
 
     try:
         pkg = glob.glob(gpat)[0]
@@ -93,7 +96,6 @@ def _move_package_to_stage(package_obj):
         logr.warning('Could not find package in ' + obj['path'])
         return False
 
-    bdest = os.path.dirname(obj['dest'])
     if util.run('mkdir -p ' + bdest, True) > 1:
         logr.warning('Error: could not create destination directory')
         return False
