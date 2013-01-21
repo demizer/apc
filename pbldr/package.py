@@ -315,13 +315,14 @@ def sign_packages(user, key, package_list):
     :package_list: A map of package names and data
 
     '''
+    gpgt = 'HOME={} {} gpg --detach-sign -u {} --use-agent --yes {}'
+    logr.debug('Package list: ' + str(package_list))
     for _, obj in package_list.items():
         gpgenv = util.get_gpg_agent_info(user)
         suser = pwd.getpwnam(user)
         logr.debug('Username: ' + str(suser))
         os.setresuid(suser[2], suser[2], 0)
-        cmd = ('HOME={} {} gpg --detach-sign -u {} --use-agent '
-               '{}'.format(suser[5], gpgenv, key, obj['filename']))
+        cmd = (gpgt.format(suser[5], gpgenv, key, obj['filename']))
         if util.run_in_path(os.path.dirname(obj['dest']), cmd, True) > 0:
             logr.warning('There was a problem signing ' + obj['filename'])
         os.setresuid(0, 0, 0)
