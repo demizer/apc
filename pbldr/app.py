@@ -46,8 +46,10 @@ class App(dict):
         self['user'] = os.getuid()
         self['overwrite_all'] = ''
 
-        if not self['pkg_in']:
+        if not self['pkg_in'] and not self['args'].p:
             self['pkg_in'] = os.listdir(os.path.join(os.getcwd(), 'devsrc'))
+        elif self['args'].p:
+            self['pkg_in'] = self['args'].p
 
         # When building packages, we will need root priviledges to work with
         # the chroot environment
