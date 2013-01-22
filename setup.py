@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='pbldr',
-    version='0.1.1',
+    version='0.1.4',
     author='Jesus Alvarez',
     author_email='jeezusjr@gmail.com',
     packages=['pbldr'],
@@ -10,7 +10,7 @@ setup(
     url='http://demizerone.com/',
     license='LICENSE',
     description='An automated packager for Arch Linux packages.',
-    long_description=open('README.rst').read(),
+    long_description=open('README.rst', encoding='UTF-8').read(),
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3.3',
