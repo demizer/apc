@@ -7,10 +7,12 @@ License: MIT (See LICENSE for details)
 import os
 import json
 import sys
+import pprint
 
 from pbldr import package
 from pbldr import logger
 from pbldr import util
+from pbldr import repo
 from pbldr.chroot import clean
 from pbldr.logger import log, log_note
 
@@ -24,7 +26,7 @@ def load_configuration():
     with open(os.path.join('config.json'), 'r') as p_file:
         conf = p_file.read()
     jobj = json.loads(conf)[0]
-    return {'signing_key': jobj['SigningKey'] or '',
+    return {'keyid': jobj['KeyID'] or '',
             'pkg_in': jobj['PackageBuildOrder'] or '',
             'log_level': jobj['LogLevel'] or '',
             'chroot_path': jobj['ChrootPath'] or '',
@@ -46,25 +48,30 @@ class App(dict):
         self['user'] = os.getuid()
         self['overwrite_all'] = ''
 
-        if not self['pkg_in'] and not self['args'].p:
+        if not self['pkg_in'] and not self['args'].pkgs:
             self['pkg_in'] = os.listdir(os.path.join(os.getcwd(), 'devsrc'))
-        elif self['args'].p:
-            self['pkg_in'] = self['args'].p
+        elif self['args'].pkgs:
+            self['pkg_in'] = self['args'].pkgs
 
         # When building packages, we will need root priviledges to work with
         # the chroot environment
         if self['args'].subparser_name == 'build':
             if not util.check_root_user():
-                logr.critical('Error: the build command needs root '
-                              'priviledges')
+                logr.critical('The build command needs root priviledges')
                 sys.exit(1)
             log('Script running with root priviledges')
             self['user'] = os.getenv('SUDO_USER')
             logr.debug('SUDO user: ' + self['user'])
 
+        if self['args'].subparser_name in ('repo', 'source'):
+            if util.check_root_user():
+                logr.critical('The repo and source commands should be run '
+                              'without root priviledges.')
+                sys.exit(1)
+
         self['pkgs'] = package.Packages(self['pkg_in'])
 
-        logr.debug('App(): ' + str(self))
+        logr.debug('App(): \n\n' + pprint.pformat(self))
 
         if self['args'].subparser_name == 'build':
             self.build()
@@ -78,55 +85,63 @@ class App(dict):
 
         '''
         package.existing_precheck(self)
-        if self['args'].c:
-            clean(self['chroot_path'], self['chroot_copyname'])
-
         for _, obj in self['pkgs'].items():
-            if self['args'].p and obj['name'] not in self['args'].p:
+            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
                 continue
+            if not self['args'].sloppy:
+                clean(self['chroot_path'], self['chroot_copyname'],
+                      obj['arch'])
             if obj['arch'] == 'i686':
                 # We only need to build the package source once
                 package.build_source(obj)
             package.build_package(self['chroot_path'], self['chroot_copyname'],
                                   obj)
 
+        log('Changing ownership of stage/ to ' + self['user'])
+        if util.run('chown -R ' + self['user'] + ': stage/', True) > 1:
+            logr.warning('Could change owner of stage files')
+
+        log('Signing packages...')
+        package.sign_packages(self['user'], self['keyid'], self['pkgs'])
+
         log('\nCleaning up log files')
         if util.run('rm -r devsrc/*/*.log 2> /dev/null', True) > 1:
             logr.warning('There was a problem cleaning the working files')
 
-        log('Changing ownership of stage/ to ' + self['user'])
-        if util.run('chown -R ' + self['user'] + ': stage/', True) > 1:
-            logr.warning('Error: could change owner of stage files')
-
-        log('Changing ownership of devsrc/ to ' + self['user'])
-        if util.run('chown -R ' + self['user'] + ': devsrc/', True) > 1:
-            logr.warning('Error: could change owner of devsrc files')
-
-        log('Signing packages...')
-        package.sign_packages(self['user'], self['signing_key'], self['pkgs'])
+        log('Changing ownership of working directories to ' + self['user'])
+        if util.run('chown -R ' + self['user'] + ': stage/ devsrc/', True) > 1:
+            logr.warning('Could change owner of working directories')
 
     def source(self):
         '''Builds the source to the packages in the devsrc directory.
 
         '''
-        pass
-        # for pkg in self.build_order:
-            # if self.args.p and pkg not in self.args.p:
-                # continue
-            # self.build_source_package(pkg)
+        for _, obj in self['pkgs'].items():
+            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
+                continue
+            package.build_source(obj)
 
     def repo(self):
         '''Repo subcommand function. Adds built packages to a repository.
 
         '''
-        pass
-        # for arch in ('x86_64', 'i686'):
-            # for pkg in self.build_order:
-                # if self.args.p and pkg not in self.args.p:
-                    # continue
-                # self.add_package_to_repo(pkg, arch)
-        # self.cleanup('repo')
-        # if mode == 'repo':
-            # log('Deleting stage files')
-            # if util.run('rm -r {}/*'.format(spath), True) > 1:
-                # logr.warning('Error: could not remove stage files')
+        if not os.listdir('stage'):
+            logr.critical('There are no packages in the stage!')
+            logr.critical('Use the build command first')
+            sys.exit(1)
+        rlist = []
+        for _, obj in self['pkgs'].items():
+            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
+                continue
+            rlist.append(obj)
+
+        target = self['repo_target']
+        if self['args'].target:
+            target = self['args'].target
+
+        repo.add_package_list(target, rlist, self['keyid'])
+
+        if not self['args'].no_delete:
+            log('Deleting stage files')
+            if util.run('rm -r stage/*'.format(obj['name']), True) > 1:
+                logr.warning('Could not remove stage files')

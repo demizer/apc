@@ -75,7 +75,7 @@ def get_gpg_agent_info(user):
     genv_path = os.path.join(user_home, '.gnupg', 'gpg-agent.env')
     logr.debug('gpg-agent.env path: ' + genv_path)
     if not os.path.exists(genv_path):
-        logr.warning('Error: ' + genv_path + ' not found')
+        logr.warning(genv_path + ' not found')
         logr.warning('There will be problems signing packages')
         return ''
     with open(genv_path, 'r') as e_file:

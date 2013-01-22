@@ -72,7 +72,7 @@ def _move_source_to_stage(package_obj):
     logr.debug('Source glob: ' + str(src))
     log('Moving ' + obj['filename'] + ' to stage')
     if util.run('mv {} {}'.format(src, sdest), True, subprocess.DEVNULL) > 1:
-        logr.warning('Error: could not move package source')
+        logr.warning('Could not move package source')
         return False
     return True
 
@@ -97,13 +97,13 @@ def _move_package_to_stage(package_obj):
         return False
 
     if util.run('mkdir -p ' + bdest, True) > 1:
-        logr.warning('Error: could not create destination directory')
+        logr.warning('Could not create destination directory')
         return False
 
     # Move the package binary and signature
     log('Moving {} to {}/'.format(obj['filename'], bdest))
     if util.run('mv {}* {}/'.format(pkg, bdest), True) > 1:
-        logr.warning('Error: could not move the package to stage')
+        logr.warning('Could not move the package to stage')
         return False
     return True
 
@@ -144,7 +144,7 @@ def existing_precheck(conf):
     log('\nChecking for existing packages...')
     for _, obj in conf['pkgs'].items():
         noexist = False
-        if conf['args'].p and obj['name'] not in conf['args'].p:
+        if conf['args'].pkgs and obj['name'] not in conf['args'].pkgs:
             continue
         if not os.path.exists(obj['dest']):
             log(obj['filename'] + ' does not exist')
@@ -187,7 +187,7 @@ def build_source(package_obj):
     user = util.get_owner_of_path(obj['path'])
     cmd = 'su ' + user + ' -c "makepkg -cSf"'
     if util.run_in_path(obj['path'], cmd, True) > 0:
-        logr.warning('Error: Could not build source package')
+        logr.warning('Could not build source package')
         return False
     return _move_source_to_stage(obj)
 
@@ -218,10 +218,10 @@ def build_package(chroot_path, chroot_copyname, package_obj):
     chroot.install_deps(cbase, obj)
 
     log('Building "{}" in "{}"'.format(obj['name'], ccopy))
-    cmd = ('setarch {} makechrootpkg -u -r {} -l {} '
-           '-- -i'.format(obj['arch'], cdir, ccopy))
+    cmd = ('setarch {} makechrootpkg -r {} -l {} -- -i'.format(obj['arch'],
+                                                               cdir, ccopy))
     if util.run_in_path(obj['path'], cmd, True) > 0:
-        logr.critical('Error: could not build in the chroot!')
+        logr.critical('The package could not be built... Terminating')
         sys.exit(1)
 
     return _move_package_to_stage(obj)
@@ -310,8 +310,8 @@ def reset_sums(package_obj):
 def sign_packages(user, key, package_list):
     '''Signs all packages in the package list
 
-    :user: The owner of the signing key
-    :key: The signing key
+    :user: The owner of the keyid
+    :key: The keyid
     :package_list: A map of package names and data
 
     '''

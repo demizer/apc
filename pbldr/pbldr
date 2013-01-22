@@ -37,33 +37,37 @@ repo    Add selected packages to the projects repositories.
 
 Optional arguments for all commands:
 -h, --help          Show this help message and exit.
--p PKG, -p N        Select packages to use.
+-p PKG, --pkgs PKG  Select packages to use.
 
 Optional arguments for the 'build' command:
--r  Select chroot root path. Example "/opt/chroot".
--l  Select chroot copy name. Example "anet".
--c  Clean chroot before building.
+-r, --root      Select chroot root path. Example "/opt/chroot".
+-c, --copy      Select chroot copy name. Example "anet".
+-d, --dirty     Do not clean the chroot before building a package.
 
 Optional arguments for the 'source' command:
 NONE
 
 Optional arguments for the 'repo' command:
-NONE'''
+-t, --target        Select a repo to add packages to.
+-n, --no-delete     Do not delete packages in the stage.
+'''
 
 # Parse the arguments!
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='store_true', default=False)
-parser.add_argument('-p', action='append', metavar='pkg')
+parser.add_argument('-p', '--pkgs', action='append')
 subparser = parser.add_subparsers(dest='subparser_name')
 
 build_parser = subparser.add_parser('build')
-build_parser.add_argument('-r', nargs='?')
-build_parser.add_argument('-l', nargs='?')
-build_parser.add_argument('-c', action='store_true', default=False)
-
-subparser.add_parser('repo')
+build_parser.add_argument('-r', '--root', nargs='?')
+build_parser.add_argument('-c', '--copy', nargs='?')
+build_parser.add_argument('-s', '--sloppy', action='store_true', default=False)
 
 subparser.add_parser('source')
+
+repo_parser = subparser.add_parser('repo')
+repo_parser.add_argument('-t', '--target', nargs='?')
+repo_parser.add_argument('-n', '--no-delete', nargs='?')
 
 args = parser.parse_args()
 

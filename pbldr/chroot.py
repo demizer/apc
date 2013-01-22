@@ -4,7 +4,7 @@ Copyright (c) 2013, Jesus Alvarez <jeezusjr@gmail.com>
 License: MIT (See LICENSE for details)
 
 '''
-import sys
+# import sys
 import os
 import re
 
@@ -15,31 +15,40 @@ from pbldr.logger import log
 logr = logger.getLogger(__name__)
 
 
-def clean(chroot_path, chroot_copyname):
+def clean(chroot_path, chroot_copyname, arch):
     '''Clean the chroot copy.
 
     This function cleans both i686 and x86_64 chroots.
 
     :chroot_path: The path to the chroot
     :chroot_copyname: The chroot copy to clean
+    :arch: The arch to clean
     :returns: True if successful
 
     '''
-    for arch in ('x86_64', 'i686'):
-        suffix = '32' if arch == 'i686' else '64'
-        cdir = os.path.join(chroot_path, arch)
-        copydir = os.path.join(cdir, chroot_copyname + suffix)
-        if not os.path.exists(copydir):
-            log('Creating ' + copydir)
-            proc = util.run(['mkdir', '-p', copydir])
-            if proc > 0:
-                logr.warning('Error: could not create directory')
-        log('\nCreating clean chroot at ' + copydir + '...')
-        proc = util.run(['rsync', '-a', '--delete', '-q', '-W', '-x', cdir +
-                         '/root/', copydir])
-        if proc > 0:
-            logr.critcal('Error: could not create clean chroot!')
-            sys.exit(1)
+    print()  # For appearance
+    suffix = '32' if arch == 'i686' else '64'
+    cdir = os.path.join(chroot_path, arch)
+    croot = os.path.join(chroot_path, arch, 'root')
+    copydir = os.path.join(cdir, chroot_copyname + suffix)
+
+    if not os.path.exists(copydir):
+        log('Chroot copy does not exist, creating ' + copydir)
+        if util.run(['mkdir', '-p', copydir]) > 0:
+            logr.warning('Could not create directory')
+
+    log('Updating the chroot root for ' + arch)
+    if util.run('setarch ' + arch + ' mkarchroot -u ' + croot, True) > 0:
+        logr.warning('Could not update the chroot root!')
+
+    log('Syncing chroot root to ' + copydir + ' ...')
+    rcmd = 'rsync -aqWx --delete {}/ {}'.format(croot, copydir)
+    if util.run(rcmd, True) > 0:
+        logr.warning('Could not sync a clean chroot!')
+        return False
+
+    log('Chroot copy clone complete')
+    return True
 
 
 def install_package(chroot_path, filepath, arch):
@@ -166,7 +175,7 @@ def _find_local_dep(name, version, arch):
             and returned.
 
     '''
-    ret = '{}-{}[-\d]+(?:{}|any).pkg.tar.xz(?!\.sig)'
+    ret = '{}-{}[\d\.\_-]+(?:{}|any).pkg.tar.xz(?!\.sig)'
     repat = ret.format(name, version, arch)
     logr.debug('Get dep regex: ' + repat)
     stage_path = os.path.join(os.getcwd(), 'stage')
