@@ -11,7 +11,6 @@ import glob
 import subprocess
 import pwd
 import pprint
-from collections import OrderedDict
 
 from pbldr import logger
 from pbldr import util
@@ -109,32 +108,23 @@ def _move_package_to_stage(package_obj):
     return True
 
 
-class Packages(OrderedDict):
-    'An ordered dictionary of packages'
+def build_list(packages):
+    plist = []
+    for arch in ('x86_64', 'i686'):
+        for pkg in packages:
+            cdir = os.getcwd()
+            path = os.path.join(cdir, 'devsrc', pkg)
+            vers = _get_version_from_pkgbuild(path)
+            fname = '{}-{}-{}.pkg.tar.xz'.format(pkg, vers, arch)
+            dest = os.path.join(cdir, 'devsrc', pkg)
+            dest = os.path.join(cdir, 'stage', pkg + '-' + vers, fname)
+            obj = {'name': pkg, 'arch': arch, 'path': path, 'filename': fname,
+                   'version': vers, 'overwrite': True, 'dest': dest,
+                   'deps': get_deps(path, arch), 'built': False,
+                   'update_sums': False, }
+            plist.append(obj)
 
-    def __init__(self, packages):
-        super(Packages, self).__init__()
-        self._build_package_list(packages)
-
-    def _build_package_list(self, packages):
-        '''Creates the Packages.__dict__ in a specific order.'''
-        for arch in ('x86_64', 'i686'):
-            for pkg in packages:
-                cdir = os.getcwd()
-                path = os.path.join(cdir, 'devsrc', pkg)
-                vers = _get_version_from_pkgbuild(path)
-                fname = '{}-{}-{}.pkg.tar.xz'.format(pkg, vers, arch)
-                dest = os.path.join(cdir, 'devsrc', pkg)
-                dest = os.path.join(cdir, 'stage', pkg + '-' + vers, fname)
-                obj = {'name': pkg,
-                       'arch': arch,
-                       'path': path,
-                       'filename': fname,
-                       'version': vers,
-                       'overwrite': True,
-                       'dest': dest,
-                       'deps': get_deps(path, arch), }
-                self[pkg + '%%' + arch] = obj
+    return plist
 
 
 def existing_precheck(conf):
@@ -143,36 +133,36 @@ def existing_precheck(conf):
 
     '''
     log('\nChecking for existing packages...')
-    for _, obj in conf['pkgs'].items():
+    for pkg in conf['pkgs']:
         noexist = False
-        if conf['args'].pkgs and obj['name'] not in conf['args'].pkgs:
+        if conf['args'].pkgs and pkg['name'] not in conf['args'].pkgs:
             continue
-        if not os.path.exists(obj['dest']):
-            log(obj['filename'] + ' does not exist')
+        if not os.path.exists(pkg['dest']):
+            log(pkg['filename'] + ' does not exist')
             noexist = True
         elif not conf['overwrite_all']:
             mtmp = '{}{} already exists. Overwrite? [Y/y/N/n] '
-            var = input(mtmp.format(OUTPUT_PREFIX, obj['filename']))
+            var = input(mtmp.format(OUTPUT_PREFIX, pkg['filename']))
             if var == 'Y':
                 conf['overwrite_all'] = 'Y'
             elif var == 'y':
-                obj['overwrite'] = True
+                pkg['overwrite'] = True
             elif var == 'N':
                 conf['overwrite_all'] = 'N'
-                obj['overwrite'] = False
+                pkg['overwrite'] = False
             else:
-                obj['overwrite'] = False  # safety
+                pkg['overwrite'] = False  # safety
         elif conf['overwrite_all'] == 'Y':
-            obj['overwrite'] = True
+            pkg['overwrite'] = True
         elif conf['overwrite_all'] == 'N':
-            obj['overwrite'] = False
+            pkg['overwrite'] = False
 
-        if obj['overwrite']:
+        if pkg['overwrite']:
             if not noexist:
-                log('Overwriting ' + obj['filename'])
+                log('Overwriting ' + pkg['filename'])
             logr.debug('Answered yes to overwrite')
         else:
-            log('Keeping ' + obj['filename'])
+            log('Keeping ' + pkg['filename'])
             logr.debug('Answered no to overwrite')
 
 
@@ -319,12 +309,12 @@ def sign_packages(user, key, package_list):
     '''
     gpgt = 'HOME={} {} gpg --detach-sign -u {} --use-agent --yes {}'
     logr.debug('Package list: ' + pprint.pformat(package_list))
-    for _, obj in package_list.items():
+    for pkg in package_list:
         gpgenv = util.get_gpg_agent_info(user)
         suser = pwd.getpwnam(user)
         logr.debug('Username: ' + str(suser))
         os.setresuid(suser[2], suser[2], 0)
-        cmd = (gpgt.format(suser[5], gpgenv, key, obj['filename']))
-        if util.run_in_path(os.path.dirname(obj['dest']), cmd, True) > 0:
-            logr.warning('There was a problem signing ' + obj['filename'])
+        cmd = (gpgt.format(suser[5], gpgenv, key, pkg['filename']))
+        if util.run_in_path(os.path.dirname(pkg['dest']), cmd, True) > 0:
+            logr.warning('There was a problem signing ' + pkg['filename'])
         os.setresuid(0, 0, 0)

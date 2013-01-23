@@ -92,7 +92,7 @@ class App(dict):
                               'without root priviledges.')
                 sys.exit(1)
 
-        self['pkgs'] = package.Packages(self['pkg_input'])
+        self['pkgs'] = package.build_list(self['pkg_input'])
 
         logr.debug('App(): \n\n' + pprint.pformat(self))
 
@@ -113,14 +113,14 @@ class App(dict):
             clean(self['chroot_path'], self['chroot_copy_name'], 'x86_64')
             clean(self['chroot_path'], self['chroot_copy_name'], 'i686')
 
-        for _, obj in self['pkgs'].items():
-            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
+        for pkg in self['pkgs']:
+            if self['args'].pkgs and pkg['name'] not in self['args'].pkgs:
                 continue
-            if obj['arch'] == 'i686':
+            if pkg['arch'] == 'i686':
                 # We only need to build the package source once
-                package.build_source(obj)
+                package.build_source(pkg)
             package.build_package(self['chroot_path'],
-                                  self['chroot_copy_name'], obj,
+                                  self['chroot_copy_name'], pkg,
                                   self['args'].no_check)
 
         log('Changing ownership of stage/ to ' + self['user'])
@@ -142,10 +142,10 @@ class App(dict):
         '''Builds the source to the packages in the devsrc directory.
 
         '''
-        for _, obj in self['pkgs'].items():
-            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
+        for pkg in self['pkgs']:
+            if self['args'].pkgs and pkg['name'] not in self['args'].pkgs:
                 continue
-            package.build_source(obj)
+            package.build_source(pkg)
 
     def repo(self):
         '''Repo subcommand function. Adds built packages to a repository.
@@ -156,10 +156,10 @@ class App(dict):
             logr.critical('Use the build command first')
             sys.exit(1)
         rlist = []
-        for _, obj in self['pkgs'].items():
-            if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
+        for pkg in self['pkgs']:
+            if self['args'].pkgs and pkg['name'] not in self['args'].pkgs:
                 continue
-            rlist.append(obj)
+            rlist.append(pkg)
 
         target = self['default_repo_target']
         if self['args'].target:
@@ -169,5 +169,5 @@ class App(dict):
 
         if not self['args'].no_delete:
             log('Deleting stage files')
-            if util.run('rm -r stage/*'.format(obj['name']), True) > 1:
+            if util.run('rm -r stage/*'.format(pkg['name']), True) > 1:
                 logr.warning('Could not remove stage files')
