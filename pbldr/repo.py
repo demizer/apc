@@ -45,7 +45,7 @@ def add_package(target, package_obj, keyid):
     log('Adding {} to the {} {} repository.'.format(package_obj['filename'],
                                                     rname,
                                                     package_obj['arch']))
-    rcmd = ['repo-add', '-s', '-k', keyid, rname + '.db.tar.xz',
+    rcmd = ['repo-add', '-s', '-f', '-k', keyid, rname + '.db.tar.xz',
             package_obj['filename']]
     rpath = os.path.join(target, package_obj['arch'])
     if util.run_in_path(rpath, rcmd, False) > 0:
@@ -113,7 +113,7 @@ def add_package_list(target, package_list, keyid):
         rlist = _prepare_repo_target(target, package_list, arch)
         rname = os.path.basename(os.getcwd())
         rpath = os.path.join(target, arch)
-        rcmd = ['repo-add', '-s', '-k', keyid, rname + '.db.tar.xz']
+        rcmd = ['repo-add', '-s', '-f', '-k', keyid, rname + '.db.tar.xz']
         rcmd.extend(rlist)
         if util.run_in_path(rpath, rcmd, False) > 0:
             logr.error('Could not add the packages to the repo')

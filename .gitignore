@@ -2,7 +2,6 @@
 *.pyc
 /_build_/
 /__pycache__/
-*.bak
 build/
 dist
 MANIFEST
