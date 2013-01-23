@@ -42,8 +42,8 @@ Optional arguments for all commands:
 -p PKG, --pkgs PKG  Select packages to use.
 
 Optional arguments for the 'build' command:
--r, --root          Select chroot root path. Example "/opt/chroot".
--c, --copy          Select chroot copy name. Example "anet".
+-r, --chroot-path   Select chroot root path. Example "/opt/chroot".
+-c, --chroot-copy   Select chroot copy name. Example "anet".
 -s, --sloppy        Do not clean the chroot before building a package.
 -n, --no-check      Do not perform signature checks.
 -u, --update-sums   Update source hashes in package PKGBUILDs.
@@ -65,8 +65,10 @@ parser.add_argument('-p', '--pkgs', action='append')
 subparser = parser.add_subparsers(dest='subparser_name')
 
 build_parser = subparser.add_parser('build')
-build_parser.add_argument('-r', '--root', action='store')
-build_parser.add_argument('-c', '--copy', action='store')
+build_parser.add_argument('-r', '--chroot-path', metavar='PATH',
+                          action='store')
+build_parser.add_argument('-c', '--chroot-copy', metavar='NAME',
+                          action='store')
 build_parser.add_argument('-s', '--sloppy', action='store_true')
 build_parser.add_argument('-n', '--no-check', action='store_true')
 build_parser.add_argument('-u', '--update-sums', action='store_true')

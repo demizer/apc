@@ -76,9 +76,11 @@ class App(dict):
         else:
             self['pkg_input'] = self['package_build_order']
 
-        # When building packages, we will need root priviledges to work with
-        # the chroot environment
         if self['args'].subparser_name == 'build':
+            if self['args'].chroot_path:
+                self['chroot_path'] = self['args'].chroot_path
+            if self['args'].chroot_copy:
+                self['chroot_copy_name'] = self['args'].chroot_copy
             if not util.check_root_user():
                 logr.critical('The build command needs root priviledges')
                 sys.exit(1)
