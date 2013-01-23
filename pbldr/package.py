@@ -10,6 +10,7 @@ import sys
 import glob
 import subprocess
 import pwd
+import pprint
 from collections import OrderedDict
 
 from pbldr import logger
@@ -317,7 +318,7 @@ def sign_packages(user, key, package_list):
 
     '''
     gpgt = 'HOME={} {} gpg --detach-sign -u {} --use-agent --yes {}'
-    logr.debug('Package list: ' + str(package_list))
+    logr.debug('Package list: ' + pprint.pformat(package_list))
     for _, obj in package_list.items():
         gpgenv = util.get_gpg_agent_info(user)
         suser = pwd.getpwnam(user)
