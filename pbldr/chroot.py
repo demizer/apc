@@ -74,29 +74,29 @@ def install_deps(chroot_path, package_obj, check_sig):
     '''Install package dependencies for the package defined by package_obj.
 
     :chroot_path: The path to install the dependency packages into
-    :package_obj: The package object dict
+    :package_obj: The package object to install deps for
     :check_sig: If true, the package signatures will be checked
 
     '''
-    obj = package_obj
+    arch = package_obj['arch']
     deps = _get_dep_install_list(package_obj)
     if not deps:
         return
     logr.debug('Dependencies to install: ' + str(deps))
-    for pkg in deps:
-        arch = obj['arch']
-        pvers = _version_from_path(pkg)
-        pname = _name_from_path(pkg)
+    for dep in deps:
+        pvers = _version_from_path(dep)
+        pname = _name_from_path(dep)
         if _package_required(chroot_path, pname, pvers, arch):
             log(pname + ' is up-to-date in the chroot')
             continue
-        if not check_sig:
-            log('Checking the signature for ' + obj['filename'])
-            if not util.check_signature(pkg + '.sig'):
+        stage_pkg = True if '/stage/' in dep else False  # hacky
+        if not check_sig and not stage_pkg:
+            log('Checking the signature for ' + package_obj['filename'])
+            if not util.check_signature(dep + '.sig'):
                 logr.error('The package signature was invalid')
                 continue
-        _copy_package_to_chroot(chroot_path, pkg)
-        install_package(chroot_path, pkg, arch)
+        _copy_package_to_chroot(chroot_path, dep)
+        install_package(chroot_path, dep, arch)
 
 
 def _package_required(chroot_path, package_name, package_version, arch):
@@ -136,20 +136,20 @@ def _get_dep_install_list(package_obj):
     :returns: A list of absolute file paths
 
     '''
-    obj = package_obj
-    log('Getting dependency list for ' + obj['name'])
-    logr.debug('Dependencies: ' + str(obj['deps']))
+    pkg = package_obj
+    log('Getting dependency list for ' + pkg['name'])
+    logr.debug('Dependencies: ' + str(pkg['deps']))
 
     ilist = []
-    for pkg in obj['deps']:
-        if '=' in pkg:
-            pkgname, pkgvers = pkg.split('=')
+    for dep in pkg['deps']:
+        if '=' in dep:
+            pkgname, pkgvers = dep.split('=')
         else:
-            pkgname = pkg
+            pkgname = dep
             pkgvers = ''
-        dep = _find_local_dep(pkgname, pkgvers, obj['arch'])
-        if dep:
-            ilist.append(dep)
+        idep = _find_local_dep(pkgname, pkgvers, pkg['arch'])
+        if idep:
+            ilist.append(idep)
     return ilist
 
 

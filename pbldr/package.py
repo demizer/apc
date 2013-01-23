@@ -61,16 +61,15 @@ def _move_source_to_stage(package_obj):
     :returns: True if successful
 
     '''
-    obj = package_obj
-    sdest = os.path.dirname(obj['dest'])
-    log('Moving {}*.src.tar.gz to {}'.format(obj['name'], sdest))
+    sdest = os.path.dirname(package_obj['dest'])
+    log('Moving {}*.src.tar.gz to {}'.format(package_obj['name'], sdest))
     try:
-        src = glob.glob(os.path.join(obj['path'], '*.src.tar.gz'))[0]
+        src = glob.glob(os.path.join(package_obj['path'], '*.src.tar.gz'))[0]
     except IndexError:
         logr.warning('Could not find package source')
         return False
     logr.debug('Source glob: ' + str(src))
-    log('Moving ' + obj['filename'] + ' to stage')
+    log('Moving ' + package_obj['filename'] + ' to stage')
     if util.run('mv {} {}'.format(src, sdest), True, subprocess.DEVNULL) > 1:
         logr.warning('Could not move package source')
         return False
@@ -85,15 +84,14 @@ def _move_package_to_stage(package_obj):
     :returns: True if successful
 
     '''
-    obj = package_obj
-    bdest = os.path.dirname(obj['dest'])
-    gpat = os.path.join(obj['path'], '*-*.pkg.tar.xz')
-    log('Moving {}*.pkg.tar.xz to {}'.format(obj['name'], bdest))
+    bdest = os.path.dirname(package_obj['dest'])
+    gpat = os.path.join(package_obj['path'], '*-*.pkg.tar.xz')
+    log('Moving {}*.pkg.tar.xz to {}'.format(package_obj['name'], bdest))
 
     try:
-        pkg = glob.glob(gpat)[0]
+        pname = glob.glob(gpat)[0]
     except IndexError:
-        logr.warning('Could not find package in ' + obj['path'])
+        logr.warning('Could not find package in ' + package_obj['path'])
         return False
 
     if util.run('mkdir -p ' + bdest, True) > 1:
@@ -101,8 +99,8 @@ def _move_package_to_stage(package_obj):
         return False
 
     # Move the package binary and signature
-    log('Moving {} to {}/'.format(obj['filename'], bdest))
-    if util.run('mv {}* {}/'.format(pkg, bdest), True) > 1:
+    log('Moving {} to {}/'.format(package_obj['filename'], bdest))
+    if util.run('mv {}* {}/'.format(pname, bdest), True) > 1:
         logr.warning('Could not move the package to stage')
         return False
     return True
@@ -173,14 +171,13 @@ def build_source(package_obj):
     :returns: True if successful
 
     '''
-    obj = package_obj
-    log('\nCreating source package for ' + obj['name'])
-    user = util.get_owner_of_path(obj['path'])
+    log('\nCreating source package for ' + package_obj['name'])
+    user = util.get_owner_of_path(package_obj['path'])
     cmd = 'su ' + user + ' -c "makepkg -cSf"'
-    if util.run_in_path(obj['path'], cmd, True) > 0:
+    if util.run_in_path(package_obj['path'], cmd, True) > 0:
         logr.warning('Could not build source package')
         return False
-    return _move_source_to_stage(obj)
+    return _move_source_to_stage(package_obj)
 
 
 def build_package(chroot_path, chroot_copyname, package_obj, check_sig):
@@ -193,30 +190,31 @@ def build_package(chroot_path, chroot_copyname, package_obj, check_sig):
     :returns: True if successful
 
     '''
-    obj = package_obj
-    if not obj['overwrite']:
+    if not package_obj['overwrite']:
         return True
 
-    log('\nProcessing {} for {}'.format(obj['name'], obj['arch']))
+    log('\nProcessing {} for {}'.format(package_obj['name'],
+                                        package_obj['arch']))
 
     reset_sums(obj)
 
-    suffix = '32' if obj['arch'] == 'i686' else '64'
-    cdir = os.path.join(chroot_path, obj['arch'])
+    suffix = '32' if package_obj['arch'] == 'i686' else '64'
+    cdir = os.path.join(chroot_path, package_obj['arch'])
     ccopy = chroot_copyname + suffix
     cbase = os.path.join(cdir, ccopy)
     util.run('rm -rf ' + os.path.join(cbase, 'build', '*'), True)
 
-    chroot.install_deps(cbase, obj, check_sig)
+    chroot.install_deps(cbase, package_obj, check_sig)
 
-    log('Building "{}" in "{}"'.format(obj['name'], ccopy))
-    cmd = ('setarch {} makechrootpkg -r {} -l {}'.format(obj['arch'], cdir,
-                                                         ccopy))
-    if util.run_in_path(obj['path'], cmd, True) > 0:
+    log('Building "{}" in "{}"'.format(package_obj['name'], ccopy))
+    cmd = ('setarch {} makechrootpkg -r {} -l {}'.format(package_obj['arch'],
+                                                         cdir, ccopy))
+    if util.run_in_path(package_obj['path'], cmd, True) > 0:
         logr.critical('The package could not be built... Terminating')
         sys.exit(1)
 
-    return _move_package_to_stage(obj)
+    package_obj['built'] = True
+    return _move_package_to_stage(package_obj)
 
 
 def get_deps(package_path, arch):
@@ -263,11 +261,10 @@ def reset_sums(package_obj):
 
     '''
     log('Checking hashes')
-    obj = package_obj
     orig_dir = os.getcwd()
-    os.chdir(obj['path'])
-    logr.debug('Changed dir: ' + obj['path'])
-    user = util.get_owner_of_path(obj['path'])
+    os.chdir(package_obj['path'])
+    logr.debug('Changed dir: ' + package_obj['path'])
+    user = util.get_owner_of_path(package_obj['path'])
     cmd = 'su ' + user + ' -c "makepkg -cg"'
     sout, serr, rcode = util.run_with_output(cmd, True)
     if rcode > 0:
@@ -285,13 +282,13 @@ def reset_sums(package_obj):
 
     pfsum = re.findall(r'\ *(?:sha|md)\d+sums=\([\w\s\n\']+\)', pkg_conf)
     if pfsum and pfsum[0] != smsum[0]:
-        log('Generating hashes for ' + obj['name'])
+        log('Generating hashes for ' + package_obj['name'])
         new_pconf = pkg_conf.replace(pfsum[0], smsum[0])
         log('Writing updated PKGBULID')
         with open('PKGBUILD', 'w') as p_file:
             p_file.write(new_pconf)
     else:
-        log('Hashes up-to-date for ' + obj['name'])
+        log('Hashes up-to-date for ' + package_obj['name'])
 
     os.chdir(orig_dir)
     logr.debug('Changed dir: ' + orig_dir)

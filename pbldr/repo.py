@@ -22,15 +22,15 @@ def add_package(target, package_obj, keyid):
     :returns: True if adding the package was successful
 
     '''
-    obj = package_obj
-    log('Adding {} to {}'.format(obj['name'], target))
-    gpat = os.path.join(target, obj['arch'], obj['name'] + '*')
+    log('Adding {} to {}'.format(package_obj['name'], target))
+    gpat = os.path.join(target, package_obj['arch'], package_obj['name'] + '*')
     if util.run('rm -rf ' + gpat, True) > 0:
         logr.warning('Could not remove package')
 
-    ppath = os.path.join(os.getcwd(), 'stage', obj['name'])
-    log('Copying {} to {}'.format(obj['name'], target))
-    rcmd = 'cp {0}*/*{1}.pkg.tar* {2}/{1}/'.format(ppath, obj['arch'], target)
+    ppath = os.path.join(os.getcwd(), 'stage', package_obj['name'])
+    log('Copying {} to {}'.format(package_obj['name'], target))
+    rcmd = 'cp {0}*/*{1}.pkg.tar* {2}/{1}/'.format(ppath, package_obj['arch'],
+                                                   target)
     if util.run(rcmd, True) > 1:
         logr.error('Could not move the package to the repo')
         return False
@@ -42,11 +42,13 @@ def add_package(target, package_obj, keyid):
 
     # Add the new packages to the repo
     rname = os.path.basename(os.getcwd())
-    log('Adding {} to the {} {} repository.'.format(obj['filename'], rname,
-                                                    obj['arch']))
+    log('Adding {} to the {} {} repository.'.format(package_obj['filename'],
+                                                    rname,
+                                                    package_obj['arch']))
     rcmd = ['repo-add', '-s', '-k', keyid, rname + '.db.tar.xz',
-            obj['filename']]
-    if util.run_in_path(os.path.join(target, obj['arch']), rcmd, False) > 0:
+            package_obj['filename']]
+    rpath = os.path.join(target, package_obj['arch'])
+    if util.run_in_path(rpath, rcmd, False) > 0:
         logr.error('Could not add the package to the repo')
         return False
 
