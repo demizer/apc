@@ -70,8 +70,9 @@ def _prepare_repo_target(target, package_list, arch):
         if not pkg['arch'] == arch:
             continue
         gpat = os.path.join(target, arch, pkg['name'] + '*')
-        if util.run('rm -rf ' + gpat, True) > 0:
-            logr.warning('Could not remove existing packages at ' + gpat)
+        star = os.path.join(target, 'sources', pkg['name'], '*')
+        if util.run('rm -rf {} {}'.format(gpat, star), True) > 0:
+            logr.warning('Could not remove existing packages in ' + target)
             logr.warning('      or no packages not found')
 
         ppath = os.path.join(os.getcwd(), 'stage', pkg['name'])
