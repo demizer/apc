@@ -15,13 +15,14 @@ from pbldr.logger import log
 logr = logger.getLogger(logger.NAME)
 
 
-def clean(chroot_path, chroot_copyname, arch):
+def clean(chroot_path, chroot_copyname, no_update, arch):
     '''Clean the chroot copy.
 
     This function cleans both i686 and x86_64 chroots.
 
     :chroot_path: The path to the chroot
     :chroot_copyname: The chroot copy to clean
+    :no_update: If true, the chroot root will not be updated
     :arch: The arch to clean
     :returns: True if successful
 
@@ -37,9 +38,10 @@ def clean(chroot_path, chroot_copyname, arch):
         if util.run(['mkdir', '-p', copydir]) > 0:
             logr.warning('Could not create directory')
 
-    log('Updating the chroot root for ' + arch)
-    if util.run('setarch ' + arch + ' mkarchroot -u ' + croot, True) > 0:
-        logr.warning('Could not update the chroot root!')
+    if not no_update:
+        log('Updating the chroot root for ' + arch)
+        if util.run('setarch ' + arch + ' mkarchroot -u ' + croot, True) > 0:
+            logr.warning('Could not update the chroot root!')
 
     log('Syncing chroot root to ' + copydir + ' ...')
     rcmd = 'rsync -aqWx --delete {}/ {}'.format(croot, copydir)

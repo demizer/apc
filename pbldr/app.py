@@ -110,8 +110,10 @@ class App(dict):
         package.existing_precheck(self)
 
         if not self['args'].sloppy:
-            clean(self['chroot_path'], self['chroot_copy_name'], 'x86_64')
-            clean(self['chroot_path'], self['chroot_copy_name'], 'i686')
+            clean(self['chroot_path'], self['chroot_copy_name'],
+                  self['args'].no_update, 'x86_64')
+            clean(self['chroot_path'], self['chroot_copy_name'],
+                  self['args'].no_update, 'i686')
 
         for pkg in self['pkgs']:
             if self['args'].pkgs and pkg['name'] not in self['args'].pkgs:
@@ -119,6 +121,8 @@ class App(dict):
             if pkg['arch'] == 'i686':
                 # We only need to build the package source once
                 package.build_source(pkg)
+            if self['args'].update_sums:
+                pkg['update_sums'] = True
             package.build_package(self['chroot_path'],
                                   self['chroot_copy_name'], pkg,
                                   self['args'].no_check)

@@ -47,6 +47,7 @@ Optional arguments for the 'build' command:
 -s, --sloppy        Do not clean the chroot before building a package.
 -n, --no-check      Do not perform signature checks.
 -u, --update-sums   Update source hashes in package PKGBUILDs.
+-x, --no-update     Do not update the chroots when building packages.
 
 Optional arguments for the 'source' command:
 NONE
@@ -58,7 +59,7 @@ Optional arguments for the 'repo' command:
 
 # Parse the arguments!
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-h', '--help', action='store_true', default=False)
+parser.add_argument('-h', '--help', action='store_true')
 parser.add_argument('-l', '--log-level', action='store')
 parser.add_argument('-p', '--pkgs', action='append')
 subparser = parser.add_subparsers(dest='subparser_name')
@@ -66,18 +67,16 @@ subparser = parser.add_subparsers(dest='subparser_name')
 build_parser = subparser.add_parser('build')
 build_parser.add_argument('-r', '--root', action='store')
 build_parser.add_argument('-c', '--copy', action='store')
-build_parser.add_argument('-s', '--sloppy', action='store_true', default=False)
-build_parser.add_argument('-n', '--no-check', action='store_true',
-                          default=False)
-build_parser.add_argument('-u', '--update-sums', action='store_true',
-                          default=False)
+build_parser.add_argument('-s', '--sloppy', action='store_true')
+build_parser.add_argument('-n', '--no-check', action='store_true')
+build_parser.add_argument('-u', '--update-sums', action='store_true')
+build_parser.add_argument('-x', '--no-update', action='store_true')
 
 subparser.add_parser('source')
 
 repo_parser = subparser.add_parser('repo')
 repo_parser.add_argument('-t', '--target', action='store')
-repo_parser.add_argument('-n', '--no-delete', action='store_true',
-                         default=False)
+repo_parser.add_argument('-n', '--no-delete', action='store_true')
 
 args = parser.parse_args()
 
