@@ -90,13 +90,13 @@ def install_deps(chroot_path, package_obj, check_sig):
         if _package_required(chroot_path, pname, pvers, arch):
             log(pname + ' is up-to-date in the chroot')
             continue
-        if check_sig:
+        if not check_sig:
             log('Checking the signature for ' + obj['filename'])
             if not util.check_signature(pkg + '.sig'):
                 logr.error('The package signature was invalid')
                 continue
         _copy_package_to_chroot(chroot_path, pkg)
-        install_package(chroot_path, pkg, arch, check_sig)
+        install_package(chroot_path, pkg, arch)
 
 
 def _package_required(chroot_path, package_name, package_version, arch):

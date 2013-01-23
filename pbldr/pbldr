@@ -66,6 +66,8 @@ build_parser = subparser.add_parser('build')
 build_parser.add_argument('-r', '--root', nargs='?')
 build_parser.add_argument('-c', '--copy', nargs='?')
 build_parser.add_argument('-s', '--sloppy', action='store_true', default=False)
+build_parser.add_argument('-n', '--no-check', action='store_true',
+                          default=False)
 
 subparser.add_parser('source')
 
