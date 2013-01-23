@@ -196,7 +196,8 @@ def build_package(chroot_path, chroot_copyname, package_obj, check_sig):
     log('\nProcessing {} for {}'.format(package_obj['name'],
                                         package_obj['arch']))
 
-    reset_sums(obj)
+    if package_obj['update_sums']:
+        reset_sums(package_obj)
 
     suffix = '32' if package_obj['arch'] == 'i686' else '64'
     cdir = os.path.join(chroot_path, package_obj['arch'])
