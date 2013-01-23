@@ -220,8 +220,8 @@ def build_package(chroot_path, chroot_copyname, package_obj, check_sig):
     chroot.install_deps(cbase, obj, check_sig)
 
     log('Building "{}" in "{}"'.format(obj['name'], ccopy))
-    cmd = ('setarch {} makechrootpkg -r {} -l {} -- -i'.format(obj['arch'],
-                                                               cdir, ccopy))
+    cmd = ('setarch {} makechrootpkg -r {} -l {}'.format(obj['arch'], cdir,
+                                                         ccopy))
     if util.run_in_path(obj['path'], cmd, True) > 0:
         logr.critical('The package could not be built... Terminating')
         sys.exit(1)
