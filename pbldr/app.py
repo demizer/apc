@@ -26,6 +26,9 @@ def load_configuration():
     :returns: A dictionary with the loaded configuration
 
     '''
+    if not os.path.exists('config.yaml'):
+        logr.critical('Could not find config.yaml')
+        sys.exit(1)
     with open(os.path.join('config.yaml'), 'r') as p_file:
         conf = p_file.read()
     if not conf:
