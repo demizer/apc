@@ -42,7 +42,7 @@ Optional arguments for all commands:
 Optional arguments for the 'build' command:
 -r, --root      Select chroot root path. Example "/opt/chroot".
 -c, --copy      Select chroot copy name. Example "anet".
--d, --dirty     Do not clean the chroot before building a package.
+-s, --sloppy    Do not clean the chroot before building a package.
 
 Optional arguments for the 'source' command:
 NONE
