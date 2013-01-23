@@ -94,3 +94,18 @@ def get_owner_of_path(path):
     stat = os.stat(path)
     uid = stat.st_uid
     return pwd.getpwuid(uid)[0]
+
+
+def check_signature(signature_path):
+    '''Check package signature
+
+    :signature_path: The full path to the signature file
+    :returns: True if the signature is valid
+
+    '''
+    if os.path.exists(signature_path):
+        if run(['pacman-key', '-v', signature_path]) > 0:
+            logr.warning('Signature check failed!')
+            return False
+        return True
+    return False

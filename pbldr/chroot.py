@@ -70,11 +70,12 @@ def install_package(chroot_path, filepath, arch):
     return True
 
 
-def install_deps(chroot_path, package_obj):
+def install_deps(chroot_path, package_obj, check_sig):
     '''Install package dependencies for the package defined by package_obj.
 
     :chroot_path: The path to install the dependency packages into
     :package_obj: The package object dict
+    :check_sig: If true, the package signatures will be checked
 
     '''
     obj = package_obj
@@ -89,8 +90,13 @@ def install_deps(chroot_path, package_obj):
         if _package_required(chroot_path, pname, pvers, arch):
             log(pname + ' is up-to-date in the chroot')
             continue
+        if check_sig:
+            log('Checking the signature for ' + obj['filename'])
+            if not util.check_signature(pkg + '.sig'):
+                logr.error('The package signature was invalid')
+                continue
         _copy_package_to_chroot(chroot_path, pkg)
-        install_package(chroot_path, pkg, arch)
+        install_package(chroot_path, pkg, arch, check_sig)
 
 
 def _package_required(chroot_path, package_name, package_version, arch):

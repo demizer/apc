@@ -95,7 +95,7 @@ class App(dict):
                 # We only need to build the package source once
                 package.build_source(obj)
             package.build_package(self['chroot_path'], self['chroot_copyname'],
-                                  obj)
+                                  obj, self['args'].no_check)
 
         log('Changing ownership of stage/ to ' + self['user'])
         if util.run('chown -R ' + self['user'] + ': stage/', True) > 1:

@@ -192,12 +192,13 @@ def build_source(package_obj):
     return _move_source_to_stage(obj)
 
 
-def build_package(chroot_path, chroot_copyname, package_obj):
+def build_package(chroot_path, chroot_copyname, package_obj, check_sig):
     '''Build a package
 
     :chroot_path: The base path to the chroot
     :chroot_copyname: The chroot copy to build in
     :package_obj: The package object dict
+    :check_sig: Check package signatures
     :returns: True if successful
 
     '''
@@ -215,7 +216,7 @@ def build_package(chroot_path, chroot_copyname, package_obj):
     cbase = os.path.join(cdir, ccopy)
     util.run('rm -rf ' + os.path.join(cbase, 'build', '*'), True)
 
-    chroot.install_deps(cbase, obj)
+    chroot.install_deps(cbase, obj, check_sig)
 
     log('Building "{}" in "{}"'.format(obj['name'], ccopy))
     cmd = ('setarch {} makechrootpkg -r {} -l {} -- -i'.format(obj['arch'],
@@ -326,20 +327,3 @@ def sign_packages(user, key, package_list):
         if util.run_in_path(os.path.dirname(obj['dest']), cmd, True) > 0:
             logr.warning('There was a problem signing ' + obj['filename'])
         os.setresuid(0, 0, 0)
-
-
-def check_signature(package):
-    '''Check package signature
-
-    :package: The package path to check. The full path
-    :returns: True if the signature is valid
-
-    '''
-    pname = os.path.basename(package)
-    sigp = package + '.sig'
-    if os.path.exists(sigp):
-        log('Checking signature for ' + package)
-        if util.run(['pacman-key', '-v', pname + '.sig']) > 0:
-            logr.warning('Signature check failed!')
-        return True
-    return False
