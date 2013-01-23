@@ -11,6 +11,7 @@ setup(
     license='LICENSE',
     description='An automated packager for Arch Linux packages.',
     long_description=open('README.rst', encoding='UTF-8').read(),
+    install_requires=['pyyaml'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3.3',
