@@ -12,9 +12,9 @@ import argparse
 
 from pbldr import app
 from pbldr import logger
-from pbldr.logger import log
+from pbldr.logger import log, log_note
 
-logr = logger.getLogger(__name__)
+logr = logger.getLogger(logger.NAME)
 
 aname = logger.colorize('pbldr -- Magically build and add packages to an Arch '
                         'Linux package repository.', 'yellow', 'bgcyan',
@@ -37,6 +37,8 @@ repo    Add selected packages to the projects repositories.
 
 Optional arguments for all commands:
 -h, --help          Show this help message and exit.
+-l, --log-level     Change the logging level. Possible values are DEBUG, INFO,
+                    WARNING, ERROR, CRITICAL
 -p PKG, --pkgs PKG  Select packages to use.
 
 Optional arguments for the 'build' command:
@@ -56,6 +58,7 @@ Optional arguments for the 'repo' command:
 # Parse the arguments!
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='store_true', default=False)
+parser.add_argument('-l', '--log-level', nargs='?')
 parser.add_argument('-p', '--pkgs', action='append')
 subparser = parser.add_subparsers(dest='subparser_name')
 
@@ -74,6 +77,15 @@ args = parser.parse_args()
 
 if len(sys.argv) == 1 or args.help:
     print(usage)
+    sys.exit(1)
+
+logger.init_logging('WARNING')
+log_note('Welcome!', 'pbldr', 'white', 'bgred')
+
+vlevel = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+if args.log_level and not args.log_level in vlevel:
+    logr.critical('Log level must be one of DEBUG, INFO, WARNING, ERROR, '
+                  'or CRITICAL!')
     sys.exit(1)
 
 if __name__ == '__main__':

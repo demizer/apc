@@ -5,7 +5,6 @@ License: MIT (See LICENSE for details)
 
 '''
 import os
-import json
 import sys
 import pprint
 
@@ -14,24 +13,41 @@ from pbldr import logger
 from pbldr import util
 from pbldr import repo
 from pbldr.chroot import clean
-from pbldr.logger import log, log_note
+from pbldr.logger import log
 
-logr = logger.getLogger(__name__)
+import yaml
+
+logr = logger.getLogger(logger.NAME)
 
 
 def load_configuration():
     '''Loads the json configuration from the current directory
 
+    :returns: A dictionary with the loaded configuration
+
     '''
-    with open(os.path.join('config.json'), 'r') as p_file:
+    with open(os.path.join('config.yaml'), 'r') as p_file:
         conf = p_file.read()
-    jobj = json.loads(conf)[0]
-    return {'keyid': jobj['KeyID'] or '',
-            'pkg_in': jobj['PackageBuildOrder'] or '',
-            'log_level': jobj['LogLevel'] or '',
-            'chroot_path': jobj['ChrootPath'] or '',
-            'chroot_copyname': jobj['ChrootCopyName'] or '',
-            'repo_target': jobj['DefaultRepoTarget'] or ''}
+    if not conf:
+        logr.critical('Could not load configuration!')
+        sys.exit(1)
+
+    try:
+        yobj = yaml.load(conf)
+    except yaml.scanner.ScannerError as err:
+        logr.critical(str(err))
+        sys.exit(1)
+
+    try:
+        yobj['chroot_path']
+        yobj['chroot_copy_name']
+        yobj['default_repo_target']
+        yobj['keyid']
+    except KeyError as err:
+        logr.critical('Missing config value: ' + str(err))
+        sys.exit(1)
+
+    return yobj
 
 
 class App(dict):
@@ -39,19 +55,23 @@ class App(dict):
 
     '''
     def __init__(self, args):
-        self.update(load_configuration())
-        logger.init_logging(self['log_level'])
-        log_note('Welcome!', 'pbldr', 'white', 'bgred')
-
         self['args'] = args
         self['base_path'] = os.getcwd()
         self['user'] = os.getuid()
         self['overwrite_all'] = ''
 
-        if not self['pkg_in'] and not self['args'].pkgs:
-            self['pkg_in'] = os.listdir(os.path.join(os.getcwd(), 'devsrc'))
+        self.update(load_configuration())
+        if self['args'].log_level:
+            self['log_level'] = self['args'].log_level
+        if self['log_level']:
+            logr.setLevel(self['log_level'])
+
+        if not self['package_build_order'] and not self['args'].pkgs:
+            self['pkg_input'] = os.listdir(os.path.join(os.getcwd(), 'devsrc'))
         elif self['args'].pkgs:
-            self['pkg_in'] = self['args'].pkgs
+            self['pkg_input'] = self['args'].pkgs
+        else:
+            self['pkg_input'] = self['package_build_order']
 
         # When building packages, we will need root priviledges to work with
         # the chroot environment
@@ -69,7 +89,7 @@ class App(dict):
                               'without root priviledges.')
                 sys.exit(1)
 
-        self['pkgs'] = package.Packages(self['pkg_in'])
+        self['pkgs'] = package.Packages(self['pkg_input'])
 
         logr.debug('App(): \n\n' + pprint.pformat(self))
 
@@ -85,17 +105,20 @@ class App(dict):
 
         '''
         package.existing_precheck(self)
+
+        if not self['args'].sloppy:
+            clean(self['chroot_path'], self['chroot_copy_name'], 'x86_64')
+            clean(self['chroot_path'], self['chroot_copy_name'], 'i686')
+
         for _, obj in self['pkgs'].items():
             if self['args'].pkgs and obj['name'] not in self['args'].pkgs:
                 continue
-            if not self['args'].sloppy:
-                clean(self['chroot_path'], self['chroot_copyname'],
-                      obj['arch'])
             if obj['arch'] == 'i686':
                 # We only need to build the package source once
                 package.build_source(obj)
-            package.build_package(self['chroot_path'], self['chroot_copyname'],
-                                  obj, self['args'].no_check)
+            package.build_package(self['chroot_path'],
+                                  self['chroot_copy_name'], obj,
+                                  self['args'].no_check)
 
         log('Changing ownership of stage/ to ' + self['user'])
         if util.run('chown -R ' + self['user'] + ': stage/', True) > 1:
@@ -135,7 +158,7 @@ class App(dict):
                 continue
             rlist.append(obj)
 
-        target = self['repo_target']
+        target = self['default_repo_target']
         if self['args'].target:
             target = self['args'].target
 

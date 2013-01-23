@@ -10,7 +10,7 @@ import pwd
 
 from pbldr import logger
 
-logr = logger.getLogger(__name__)
+logr = logger.getLogger(logger.NAME)
 
 
 def check_root_user():

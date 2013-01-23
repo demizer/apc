@@ -12,7 +12,7 @@ from pbldr import util
 from pbldr import logger
 from pbldr.logger import log
 
-logr = logger.getLogger(__name__)
+logr = logger.getLogger(logger.NAME)
 
 
 def clean(chroot_path, chroot_copyname, arch):

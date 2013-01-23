@@ -17,7 +17,7 @@ from pbldr import util
 from pbldr import chroot
 from pbldr.logger import log, OUTPUT_PREFIX
 
-logr = logger.getLogger(__name__)
+logr = logger.getLogger(logger.NAME)
 
 # Bash script used to get dependency lists from PKGBUILD
 BASH_DEP_SCRIPT = """'arches=(i686 x86_64); \

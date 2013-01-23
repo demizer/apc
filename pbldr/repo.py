@@ -10,7 +10,7 @@ from pbldr import logger
 from pbldr import util
 from pbldr.logger import log
 
-logr = logger.getLogger(__name__)
+logr = logger.getLogger(logger.NAME)
 
 
 def add_package(target, package_obj, keyid):

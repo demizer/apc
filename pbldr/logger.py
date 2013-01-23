@@ -3,6 +3,9 @@ import datetime
 import re
 import sys
 
+# Logging namespace
+NAME = 'pbldr'
+
 # Prefix for logging output
 PREFIX = '[>>>]'
 
