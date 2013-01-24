@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='pbldr',
-    version='0.1.4',
+    version='0.3.0',
     author='Jesus Alvarez',
     author_email='jeezusjr@gmail.com',
     packages=['pbldr'],

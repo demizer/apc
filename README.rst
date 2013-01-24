@@ -2,15 +2,12 @@
 pbldr for Arch Linux
 ====================
 :Created: Tue Sep 18 20:56:03 PDT 2012
-:Modified: Sun Jan 20 00:06:39 PST 2013
+:Modified: Wed Jan 23 17:35:05 PST 2013
 
-pbldr is a tool written in Python for building and packaging Arch Linux
+``pbldr`` is a tool written in Python for building and packaging Arch Linux
 packages into a repository.
 
 *This project is MIT licensed*
-
-.. note:: pbldr is very early in development and may not work right. Since it
-          has parts that must run with root priviledges, you have been warned.
 
 -----------------
 How does it work?
@@ -35,14 +32,14 @@ How does it work?
 
 * Package sources are saved to {repo}/sources
 
-* The entire directory can then be synced to a webhost, or just the
+* The entire directory can then be synced to a web host, or just the
   repositories.
 
 ----------------
 How to get pbldr
 ----------------
 
-pbldr is available in AUR (https://aur.archlinux.org/packages/python-pbldr/) via PyPI (http://pypi.python.org/pypi/pbldr/).
+``pbldr`` is available in AUR_ via PyPI_.
 
 -------------------
 Directory structure
@@ -59,9 +56,11 @@ Example directory structure
     archzfs/
     ├── archiso
     │   ├── i686
+    |   ├── sources
     │   └── x86_64
     ├── core
     │   ├── i686
+    |   ├── sources
     │   └── x86_64
     ├── depends
     │   ├── linux-3.7.2-1-i686.pkg.tar.xz
@@ -89,8 +88,9 @@ Example directory structure
     │       └── zfs-utils-0.6.0_rc13_3.6.11-2.src.tar.gz
     ├── testing
     │   ├── i686
+    |   ├── sources
     │   └── x86_64
-    └── config.json
+    └── config.yaml
 
 Repositories
 ============
@@ -99,42 +99,47 @@ pbldr uses the name of the directory it is executed from as the name of the
 repository when adding packages to a repository. In the example directory
 structure above the repository name is 'archzfs'.
 
-DefaultRepoTarget is used as the default repository target in case the '-t'
-argument is not used with the repo subcommand.
+``default_repo_target`` is used as the default repository target in case the
+'-t' argument is not used with the repo subcommand.
 
 In the directory structure example above, the core, archiso, and testing
 directories are repository directories, and thus, repository targets.
 
-config.json
+config.yaml
 ===========
 
 The configuration file for pbldr. Without this file, pbldr would not know what
 to do.
 
-Optional values
----------------
+Example config.json
+-------------------
 
-PackageBuildOrder
-    Specify a build order for building packages. If this value is missing,
-    the packages in devsrc will be built in a random order.
+.. code-block:: yaml
 
-LogLevel
-    Adjust the rate of output logging. Levels include: INFO, WARNING, ERROR,
-    CRITICAL, DEBUG. DEBUG is the lowest level and shows all output.
+    chroot_copy_name: general
+    chroot_path: /opt/chroot
+    default_repo_target: core
+    log_level: DEBUG
+    package_build_order:
+    - spl-utils
+    - spl
+    - zfs-utils
+    - zfs
+    keyid: 0EE7A126
 
 Required values
 ---------------
 
-ChrootPath:
+chroot_path:
     This value indicates the base path of of the chroot. Typically this is
-    /opt/chroot.
+    /opt/chroot. The "--chroot-path" argument overrides this value.
 
-ChrootCopyName:
+chroot_copy_name:
     When creating a copy of the chroot root, this name will be used. The
     targeted architecture of the current build process is appended to
-    ChrootCopyName and the root chroot is rsync'd to this path. So if
-    ChrootCopyName name is "zfs" and the current arch target is "i686', then
-    the full chroot copy path will be /opt/chroot/i686/zfs32.
+    ``chroot_copy_name`` and the root chroot is rsync'd to this path. So if
+    ``chroot_copy_name`` name is "zfs" and the current arch target is "i686',
+    then the full chroot copy path will be /opt/chroot/i686/zfs32.
 
     In this path the chroot root (/opt/chroot/i686/root) will be copied over
     using rsync and the packages will be built and installed.
@@ -142,40 +147,32 @@ ChrootCopyName:
     The chroot is refreshed it the '-c' argument is passed to the build
     subcommand of pbldr.
 
-SigningKey:
-    pbldr signs all packages and repositories. This value is the KeyID of your
-    GPG key.
+    The "--chroot-copy" argument overrides this value.
 
-DefaultRepoTarget:
-    The default repo target to use incase a repo target '-t' is not specified.
+keyid:
+    pbldr signs all packages and repositories using a GnuPG key.
 
-Example config.json
--------------------
+default_repo_target:
+    The default repo target to use in case a repo target '-t' is not specified.
 
-.. code-block:: json
+Optional values
+---------------
 
-    [
-        {
-            "PackageBuildOrder": [
-                "spl-utils",
-                "spl",
-                "zfs-utils",
-                "zfs"
-            ],
-            "LogLevel": "DEBUG",
-            "ChrootPath": "/opt/chroot",
-            "ChrootCopyName": "zfs",
-            "SigningKey": "0EE7A126",
-            "DefaultRepoTarget": "core"
-        }
-    ]
+package_build_order:
+    Specify a build order for building packages. If this value is missing,
+    the packages in devsrc will be built in a random order.
+
+log_level:
+    Adjust the rate of output logging. Levels include: INFO, WARNING, ERROR,
+    CRITICAL, DEBUG. DEBUG is the lowest level and shows all output. Using the
+    "--log-level" argument overrides this value.
 
 Devsrc
 ======
 
 The devsrc directory contains the package sources for building. All
-subdirectories in devsrc will be built if PackageBuildOrder is not specified in
-the configuration file.
+subdirectories in devsrc will be built if ``package_build_order`` is not
+specified in the configuration file.
 
 stage
 =====
@@ -202,7 +199,7 @@ along with the signature file.
 
 pbldr first searches the stage directory for any dependencies, if none are
 found, it finally searches the depends directory. If no matching packages are
-found still, the dependency is deferred to pacman at buildtime.
+found still, the dependency is deferred to pacman at build time.
 
 If matching packages are found, pbldr performs a signature check on the
 dependency to make sure it is a valid package. If the signature file is
@@ -211,8 +208,8 @@ missing, or the check is invalid, the package is considered invalid.
 Chroot environments
 ===================
 
-pbldr builds and installes packages into a clean chroot so that the host system
-is not modified with uneeded build dependencies. This also has the added effect
+pbldr builds and installs packages into a clean chroot so that the host system
+is not modified with unneeded build dependencies. This also has the added effect
 of verifying the package will build on any system by detected missing
 dependencies on a clean system.
 
@@ -224,7 +221,7 @@ clean chroot is made from using rsync. This root environment is only used as a
 pristine copy, no packages are installed or built inside the root copy.
 
 You can adjust the variables used by pbldr when working with chroot
-environments with the config.json configuration file in the project root
+environments with the config.yaml configuration file in the project root
 directory, or you can pass them as arguments to the script.
 
 32bit chroot environment
@@ -314,3 +311,5 @@ Producers
 .. _namcap: https://wiki.archlinux.org/index.php/Namcap
 .. _devtools: https://www.archlinux.org/packages/extra/any/devtools
 .. _Buldinig 32-bit packages on a 64-bit system: https://wiki.archlinux.org/index.php/Building_32-bit_packages_on_a_64-bit_system
+.. _AUR: https://aur.archlinux.org/packages/python-pbldr/
+.. _PyPI: http://pypi.python.org/pypi/pbldr/

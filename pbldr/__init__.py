@@ -8,4 +8,4 @@ Copyright (c) 2013, Jesus Alvarez <jeezusjr@gmail.com>
 License: MIT (See LICENSE for details)
 """
 
-__version__ = '0.1.4'
+__version__ = '0.3.0'
