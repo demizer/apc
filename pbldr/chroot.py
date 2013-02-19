@@ -152,6 +152,7 @@ def _get_dep_install_list(package_obj):
         idep = _find_local_dep(pkgname, pkgvers, pkg['arch'])
         if idep:
             ilist.append(idep)
+    logr.debug('Local dependencies found: ' + str(ilist))
     return ilist
 
 
@@ -210,7 +211,7 @@ def _name_from_path(filepath):
 
     """
     name = os.path.basename(filepath)
-    nre = re.search('([\w\.-]+)-[\w\.-]+-\d-(?:x86_64|i686|any).pkg.tar.xz',
+    nre = re.search('([\w\.-]+)-[\w\.-]+-[\d]+-(?:x86_64|i686|any).pkg.tar.xz',
                     name)
     if nre:
         return nre.group(1)
