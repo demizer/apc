@@ -9,6 +9,8 @@ NAME = 'pbldr'
 # Prefix for logging output
 PREFIX = '[>>>]'
 
+LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+
 # Documentation for ansi escape sequences.
 # http://bluesock.org/~willg/dev/ansi.html#sequences
 # http://en.wikipedia.org/wiki/ANSI_escape_code
