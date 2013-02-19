@@ -2,11 +2,11 @@ from distutils.core import setup
 
 setup(
     name='pbldr',
-    version='0.3.0',
+    version='0.3.2',
     author='Jesus Alvarez',
     author_email='jeezusjr@gmail.com',
     packages=['pbldr'],
-    scripts=['pbldr/pbldr'],
+    scripts=['bin/pbldr'],
     url='http://demizerone.com/',
     license='LICENSE',
     description='An automated packager for Arch Linux packages.',
