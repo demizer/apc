@@ -14,7 +14,11 @@ from pbldr import app
 from pbldr import logger
 from pbldr.logger import log, log_note
 
+logger.init_logging('WARNING')
+
 logr = logger.getLogger(logger.NAME)
+
+log_note('Welcome!', 'pbldr', 'white', 'bgred')
 
 aname = logger.colorize('pbldr -- Magically build and add packages to an Arch '
                         'Linux package repository.', 'yellow', 'bgcyan',
@@ -57,47 +61,48 @@ Optional arguments for the 'repo' command:
 -n, --no-delete     Do not delete packages in the stage.
 '''
 
-# Parse the arguments!
-parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-h', '--help', action='store_true')
-parser.add_argument('-l', '--log-level', action='store')
-parser.add_argument('-p', '--pkgs', action='append')
-subparser = parser.add_subparsers(dest='subparser_name')
 
-build_parser = subparser.add_parser('build')
-build_parser.add_argument('-r', '--chroot-path', metavar='PATH',
-                          action='store')
-build_parser.add_argument('-c', '--chroot-copy', metavar='NAME',
-                          action='store')
-build_parser.add_argument('-s', '--sloppy', action='store_true')
-build_parser.add_argument('-n', '--no-check', action='store_true')
-build_parser.add_argument('-u', '--update-sums', action='store_true')
-build_parser.add_argument('-x', '--no-update', action='store_true')
+def parse_args(args=None):
+    '''Parse the arguments'''
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-h', '--help', action='store_true')
+    parser.add_argument('-l', '--log-level', action='store')
+    parser.add_argument('-p', '--pkgs', action='append')
+    subparser = parser.add_subparsers(dest='subparser_name')
 
-subparser.add_parser('source')
+    build_parser = subparser.add_parser('build')
+    build_parser.add_argument('-r', '--chroot-path', metavar='PATH',
+                              action='store')
+    build_parser.add_argument('-c', '--chroot-copy', metavar='NAME',
+                              action='store')
+    build_parser.add_argument('-s', '--sloppy', action='store_true')
+    build_parser.add_argument('-n', '--no-check', action='store_true')
+    build_parser.add_argument('-u', '--update-sums', action='store_true')
+    build_parser.add_argument('-x', '--no-update', action='store_true')
 
-repo_parser = subparser.add_parser('repo')
-repo_parser.add_argument('-t', '--target', action='store')
-repo_parser.add_argument('-n', '--no-delete', action='store_true')
+    subparser.add_parser('source')
 
-args = parser.parse_args()
+    repo_parser = subparser.add_parser('repo')
+    repo_parser.add_argument('-t', '--target', action='store')
+    repo_parser.add_argument('-n', '--no-delete', action='store_true')
 
-if len(sys.argv) == 1 or args.help:
-    print(usage)
-    sys.exit(1)
+    args = parser.parse_args(args)
 
-logger.init_logging('WARNING')
-log_note('Welcome!', 'pbldr', 'white', 'bgred')
+    if len(sys.argv) == 1 or args.help:
+        print(usage)
+        sys.exit(1)
 
-vlevel = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
-if args.log_level and not args.log_level in vlevel:
-    logr.critical('Log level must be one of DEBUG, INFO, WARNING, ERROR, '
-                  'or CRITICAL!')
-    sys.exit(1)
+    if args.log_level and not args.log_level in logger.LEVELS:
+        logr.critical('Log level must be one of DEBUG, INFO, WARNING, ERROR, '
+                      'or CRITICAL!')
+        sys.exit(1)
+
+    return args
+
 
 if __name__ == '__main__':
     try:
-        app.App(args)
+        app.App(parse_args())
         log('All done')
     except (KeyboardInterrupt, EOFError):
         log('\nToodles')
