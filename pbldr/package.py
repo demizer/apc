@@ -270,6 +270,7 @@ def reset_sums(package_obj):
     sout, serr, rcode = util.run_with_output(cmd, True)
     if rcode > 0:
         logr.warning('Return code: ' + str(rcode))
+        logr.warning('stderr: ' + str(serr))
         return False
 
     smsum = re.findall(r'\ *(?:sha|md)\d+sums=\([\w\s\n\']+\)', sout)
