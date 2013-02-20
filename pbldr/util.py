@@ -109,3 +109,17 @@ def check_signature(signature_path):
             return False
         return True
     return False
+
+
+def check_stage_for_package(package_name):
+    '''Check the stage for a package.
+
+    :package_name: The package to search the stage for.
+    :returns: True if the package is in the stage directory.
+
+    '''
+    for pkg in os.listdir('stage'):
+        if package_name in pkg:
+            logr.info("Found " + package_name + " in the stage directory")
+            return True
+    return False

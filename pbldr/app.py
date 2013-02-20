@@ -157,13 +157,17 @@ class App(dict):
         '''Repo subcommand function. Adds built packages to a repository.
 
         '''
-        if not os.listdir('stage'):
+        stage_pkgs = os.listdir('stage')
+        if not stage_pkgs:
             logr.critical('There are no packages in the stage!')
             logr.critical('Use the build command first')
             sys.exit(1)
+        logr.debug("stagePkgs = " + str(stage_pkgs))
+
         rlist = []
         for pkg in self['pkgs']:
-            if self['args'].pkgs and pkg['name'] not in self['args'].pkgs:
+            if (self['args'].pkgs and pkg['name'] not in self['args'].pkgs or
+                    not util.check_stage_for_package(pkg['name'])):
                 continue
             rlist.append(pkg)
 
