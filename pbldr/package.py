@@ -54,6 +54,21 @@ def _get_version_from_pkgbuild(package_path):
     return pkgver[0] + '-' + pkgrel[0] or ''
 
 
+def _get_arch_list(package_path):
+    '''Get the architecture list from the PKGBUILD in package_path.
+
+    :package_path: The path containing the PKGBUILD.
+    :returns: A list of arches for the package.
+
+    '''
+    with open(os.path.join(package_path, 'PKGBUILD'), 'r') as p_file:
+        pkgb = p_file.read()
+    pkgarchstr = re.findall(r"arch=\((.+)\)\n", pkgb)
+    if pkgarchstr:
+        pkgarch = re.findall(r"(i686|x86_64)+", pkgarchstr[0])
+    return pkgarch or []
+
+
 def _move_source_to_stage(package_obj):
     '''Moves a newly built package source to stage/
 
@@ -108,11 +123,12 @@ def _move_package_to_stage(package_obj):
 
 def build_list(packages):
     plist = []
-    for arch in ('x86_64', 'i686'):
-        for pkg in packages:
-            cdir = os.getcwd()
-            path = os.path.join(cdir, 'devsrc', pkg)
-            vers = _get_version_from_pkgbuild(path)
+    for pkg in packages:
+        cdir = os.getcwd()
+        path = os.path.join(cdir, 'devsrc', pkg)
+        arches = _get_arch_list(path)
+        vers = _get_version_from_pkgbuild(path)
+        for arch in arches:
             fname = '{}-{}-{}.pkg.tar.xz'.format(pkg, vers, arch)
             dest = os.path.join(cdir, 'devsrc', pkg)
             dest = os.path.join(cdir, 'stage', pkg + '-' + vers, fname)
