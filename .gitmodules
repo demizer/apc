@@ -1,0 +1,6 @@
+[submodule "src/alpm"]
+	path = src/alpm
+	url = https://github.com/demizer/go-alpm.git
+[submodule "src/logger"]
+	path = src/logger
+	url = https://github.com/demizer/go-logger.git
