@@ -1,3 +1,10 @@
+/*
+ * main.go - Application entry point
+ *
+ * Copyright (c) 2013 - The APC Authors
+ *
+ * MIT Licensed. See LICENSE for details.
+ */
 package main
 
 import (
