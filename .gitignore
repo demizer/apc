@@ -1,2 +1,4 @@
 !*
-/src/apc
+bin/
+pkg/
+src/apc/apc
