@@ -1,5 +1,5 @@
 ============================
-apc - Arch Package Companion
+APC - Arch Package Companion
 ============================
 
 apc is a package building tool for Arch Linux. It builds AUR packages in a
@@ -14,8 +14,10 @@ Getting started
 
 #. Initialize the git submodules
 
-    $ git submodule init
-    $ git submodule update
+   .. code:: console
+
+     $ git submodule init
+     $ git submodule update
 
 #. Setup the workspace
 
@@ -24,16 +26,22 @@ Getting started
 
 #. Set PATH
 
-    $ export PATH="$(pwd)/bin:${PATH}"
+   .. code:: console
+
+     $ export PATH="$(pwd)/bin:${PATH}"
 
 #. Install
 
-    $ src/apc/
-    $ go install
+   .. code:: console
+
+     $ src/apc/
+     $ go install
 
 #. Run
 
-    $ apc
+   .. code:: console
+
+     $ apc
 
 -----
 Usage
@@ -41,7 +49,7 @@ Usage
 
 APC is command based.
 
-    -C, --clean     Remove compiled packages
+-C, --clean     Remove compiled packages
 
 -------
 Authors
