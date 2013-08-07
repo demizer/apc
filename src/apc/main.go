@@ -1,18 +1,18 @@
 package main
 
 import (
+	"logger"
 	"os"
 	"time"
-	"logger"
 )
 
 type Package struct {
-	Name string
+	Name         string
 	LastRetrieve time.Time
-	Installed bool
-	Info *os.FileInfo
-	Repo string
-	Path string
+	Installed    bool
+	Info         *os.FileInfo
+	Repo         string
+	Path         string
 }
 
 func main() {
