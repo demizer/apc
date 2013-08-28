@@ -1,0 +1,20 @@
+# This package contains a dependency that connot be met
+pkgname=stand_alone_package
+pkgver=0.0.1
+pkgrel=1
+pkgdesc="A package with no dependencies"
+arch=('i686' 'x86_64')
+url="http://www.demizerone.com"
+license=('MIT')
+source=(source1.txt source2.txt)
+md5sums=('f03c034b8dabbf41f4fbf9dee5bdb4f1'
+        '76985ad0528c7c8af3668843e5a54ece')
+build() {
+  echo "Building test package..."
+}
+
+package() {
+  echo "Packaging test package..."
+}
+
+# vim:set ts=2 sw=2 et:

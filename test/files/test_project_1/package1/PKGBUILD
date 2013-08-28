@@ -1,0 +1,21 @@
+pkgname=package1
+pkgver=0.0.1
+pkgrel=1
+pkgdesc="My first test project for apc."
+arch=('i686' 'x86_64')
+url="http://www.demizerone.com"
+license=('MIT')
+depends=('package4')
+source=(source1.txt source2.txt)
+md5sums=('9f5ac8038c9346c74652ff2ca936c377'
+         '8526f44c464c6a0b93a4a58d3bdae87e')
+
+build() {
+  echo "Building test package..."
+}
+
+package() {
+  echo "Packaging test package..."
+}
+
+# vim:set ts=2 sw=2 et:
