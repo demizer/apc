@@ -12,6 +12,9 @@ This project is MIT licensed. See LICENSE for details.
 Getting started
 ---------------
 
+.. warning:: This Go project workspace uses git submodules instead of the "go get"
+             command.
+
 1. Clone the repository
 
 #. Initialize the git submodules
