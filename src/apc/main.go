@@ -14,6 +14,8 @@ import (
 	"os"
 )
 
+var log = logger.New(logger.CRITICAL, os.Stdout)
+
 // ParseConfig parses the pacman config if it exists and returns a PacmanConfig
 // object.
 func ParseConfig() (*alpm.PacmanConfig, error) {
