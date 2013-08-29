@@ -4,3 +4,6 @@
 [submodule "src/logger"]
 	path = src/logger
 	url = https://github.com/demizer/go-logger.git
+[submodule "src/aur"]
+	path = src/aur
+	url = https://github.com/demizer/go-aurjson.git
