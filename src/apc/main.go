@@ -10,6 +10,7 @@ package main
 
 import (
 	"alpm"
+	"aur"
 	"logger"
 	"os"
 )
@@ -93,7 +94,7 @@ func IsOfficialPackage(pkg alpm.Package) bool {
 			// TODO: Fix logger to allow setting log level on
 			// default logger!!
 			// log.Debugln("IsOfficialPackage():", name, "is from",
-				// db.Name())
+			// db.Name())
 			return true
 		}
 	}
@@ -108,7 +109,7 @@ func InitPacmanDbs() error {
 	}
 	for _, db := range dbs.Slice() {
 		if odb := OfficialDbFromString(db.Name()); odb > UnofficialDb {
-			log.Debugln("Detected official db:", odb)
+			// log.Debugln("Detected official db:", odb)
 			officialDbs[odb] = db
 		}
 	}
@@ -135,15 +136,96 @@ func Init() {
 	}
 }
 
+type AurCheckResult int
+
+const (
+	AUR_CHECK AurCheckResult = iota
+	AUR_CURRENT
+	AUR_OUT_OF_DATE
+	AUR_NEW_VERSION
+	AUR_MISSING
+)
+
+type AurInfo struct {
+	result  AurCheckResult
+	pkg     alpm.Package
+	aurInfo *aur.PkgInfo
+}
+
+func AurChecker(job AurInfo, done chan<- bool) {
+	// log.Debugln("Receiving:", job.pkg.Name())
+	pInfo, err := aur.GetInfo(job.pkg.Name())
+	cName := logger.AnsiEscape(logger.BOLD, logger.WHITE,
+		job.pkg.Name(), logger.OFF)
+	if err != nil {
+		mLabel := logger.AnsiEscape(logger.BOLD,
+			logger.RED, "[MISSING]", logger.OFF)
+		log.Println(mLabel, cName)
+		done <- true
+		return
+	}
+	if alpm.VerCmp(job.pkg.Version(), pInfo.Version) != 0 {
+		job.result = AUR_NEW_VERSION
+		nVerLabel := logger.AnsiEscape(logger.BOLD,
+			logger.CYAN, "[NEW VERSION]", logger.OFF)
+		arrow := logger.AnsiEscape(logger.BOLD, logger.RED, "=>",
+			logger.OFF)
+		log.Println(nVerLabel, cName, "("+job.pkg.Version(), arrow,
+			pInfo.Version+")")
+		done <- true
+		return
+	}
+
+	curLabel := logger.AnsiEscape(logger.BOLD, logger.GREEN,
+		"[CURRENT]", logger.OFF)
+	log.Println(curLabel, cName, "=", job.pkg.Version())
+	done <- true
+}
+
+func ExternalPackageList() []alpm.Package {
+	pkgs := make([]alpm.Package, 0)
+	for _, pkg := range localDb.PkgCache().Slice() {
+		if !IsOfficialPackage(pkg) {
+			pkgs = append(pkgs, pkg)
+		}
+	}
+	return pkgs
+}
+
+func AurCheckManager(jobs []alpm.Package, aChan chan<- AurInfo) {
+	for _, job := range jobs {
+		// log.Debugln("Sending:", job.Name())
+		aChan <- AurInfo{AUR_CHECK, job, nil}
+	}
+	close(aChan)
+}
+
+func AurCheckRunner(done chan bool, aChan chan AurInfo) {
+	for job := range aChan {
+		go AurChecker(job, done)
+	}
+}
+
+func CheckExternalPackages() {
+	packages := ExternalPackageList()
+
+	aChan := make(chan AurInfo)
+	done := make(chan bool, len(packages))
+
+	go AurCheckManager(packages, aChan)
+	go AurCheckRunner(done, aChan)
+
+	// Wait for all of the goroutines to post results
+	for i := 0; i < len(packages); i++ {
+		<-done // Blocks waiting for a receive (discards the value)
+	}
+}
+
 func main() {
 	// Read the config and get the handle
 	Init()
 
-	for _, pkg := range localDb.PkgCache().Slice() {
-		if !IsOfficialPackage(pkg) {
-			log.Println(pkg.Name())
-		}
-	}
+	CheckExternalPackages()
 
 	if handle.Release() != nil {
 		log.Criticalln("Could not release libalpm!")
