@@ -9,14 +9,11 @@
 package main
 
 import (
-	"alpm"
-	"aur"
-	"log"
-	"logger"
+	"github.com/demizer/go-alpm"
+	"github.com/demizer/go-elog"
+	"github.com/demizer/apc/aur"
 	"os"
 )
-
-var log = logger.New(logger.CRITICAL, os.Stdout)
 
 // ParseConfig parses the pacman config if it exists and returns a PacmanConfig
 // object.
@@ -92,8 +89,8 @@ func IsOfficialPackage(pkg alpm.Package) bool {
 	name := pkg.Name()
 	for _, db := range officialDbs {
 		if _, err := db.PkgByName(name); err == nil {
-			// TODO: Fix logger to allow setting log level on
-			// default logger!!
+			// TODO: Fix log to allow setting log level on
+			// default log!!
 			// log.Debugln("IsOfficialPackage():", name, "is from",
 			// db.Name())
 			return true
@@ -156,29 +153,29 @@ type AurInfo struct {
 func AurChecker(job AurInfo, done chan<- bool) {
 	// log.Debugln("Receiving:", job.pkg.Name())
 	pInfo, err := aur.GetInfo(job.pkg.Name())
-	cName := logger.AnsiEscape(logger.BOLD, logger.WHITE,
-		job.pkg.Name(), logger.OFF)
+	cName := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_WHITE,
+		job.pkg.Name(), log.ANSI_OFF)
 	if err != nil {
-		mLabel := logger.AnsiEscape(logger.BOLD,
-			logger.RED, "[MISSING]", logger.OFF)
+		mLabel := log.AnsiEscape(log.ANSI_BOLD,
+			log.ANSI_RED, "[MISSING]", log.ANSI_OFF)
 		log.Println(mLabel, cName)
 		done <- true
 		return
 	}
 	if alpm.VerCmp(job.pkg.Version(), pInfo.Version) != 0 {
 		job.result = AUR_NEW_VERSION
-		nVerLabel := logger.AnsiEscape(logger.BOLD,
-			logger.CYAN, "[NEW VERSION]", logger.OFF)
-		arrow := logger.AnsiEscape(logger.BOLD, logger.RED, "=>",
-			logger.OFF)
+		nVerLabel := log.AnsiEscape(log.ANSI_BOLD,
+			log.ANSI_CYAN, "[NEW VERSION]", log.ANSI_OFF)
+		arrow := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_RED, "=>",
+			log.ANSI_OFF)
 		log.Println(nVerLabel, cName, "("+job.pkg.Version(), arrow,
 			pInfo.Version+")")
 		done <- true
 		return
 	}
 
-	curLabel := logger.AnsiEscape(logger.BOLD, logger.GREEN,
-		"[CURRENT]", logger.OFF)
+	curLabel := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_GREEN,
+		"[CURRENT]", log.ANSI_OFF)
 	log.Println(curLabel, cName, "=", job.pkg.Version())
 	done <- true
 }
@@ -223,8 +220,6 @@ func CheckExternalPackages() {
 }
 
 func main() {
-	log.Flags = 0
-
 	// Read the config and get the handle
 	Init()
 
