@@ -2,9 +2,9 @@
 APC - Arch Package Companion
 ============================
 
-apc is a package building tool for Arch Linux. It builds AUR packages in a
-chroot environment for i686 and x86_64 and adds the compiled packages to a
-repository.
+Arch Package Companion (APC) is a package building tool for Arch Linux. It
+builds AUR packages in a chroot environment for i686 and x86_64 and adds the
+compiled packages to a repository.
 
 This project is MIT licensed. See LICENSE for details.
 
@@ -12,35 +12,12 @@ This project is MIT licensed. See LICENSE for details.
 Getting started
 ---------------
 
-.. warning:: This Go project workspace uses git submodules instead of the "go get"
-             command.
+1. Download and build APC
 
-1. Clone the repository
+   .. code::console
 
-#. Initialize the git submodules
+    $ go get github.com/demizer/apc
 
-   .. code:: console
-
-     $ git submodule init
-     $ git submodule update
-
-#. Setup the workspace
-
-   The apc authors use https://github.com/divoxx/goproj for managing Go
-   workspaces.
-
-#. Set PATH
-
-   .. code:: console
-
-     $ export PATH="$(pwd)/bin:${PATH}"
-
-#. Install
-
-   .. code:: console
-
-     $ src/apc/
-     $ go install
 
 #. Run
 
@@ -54,7 +31,7 @@ Usage
 
 APC is command based.
 
--C, --clean     Remove compiled packages
+    -C, --clean     Remove compiled packages
 
 -------
 Authors
