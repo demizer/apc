@@ -14,9 +14,9 @@ Getting started
 
 1. Download and build APC
 
-   .. code::console
+   .. code:: console
 
-    $ go get github.com/demizer/apc
+     $ go get github.com/demizer/apc
 
 
 #. Run
@@ -31,7 +31,7 @@ Usage
 
 APC is command based.
 
-    -C, --clean     Remove compiled packages
+-C, --clean     Remove compiled packages
 
 -------
 Authors
