@@ -11,6 +11,7 @@ package main
 import (
 	"alpm"
 	"aur"
+	"log"
 	"logger"
 	"os"
 )
@@ -222,6 +223,8 @@ func CheckExternalPackages() {
 }
 
 func main() {
+	log.Flags = 0
+
 	// Read the config and get the handle
 	Init()
 
