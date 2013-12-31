@@ -10,6 +10,8 @@ package main
 
 import (
 	"github.com/demizer/go-alpm"
+	"github.com/demizer/go-elog"
+	"os"
 )
 
 // An officially supported repository that would be found in pacman.conf.
@@ -74,6 +76,23 @@ func IsOfficialPackage(pkg alpm.Package) bool {
 	}
 	// log.Debugln("IsOfficialPackage():", name, "is NOT an official package")
 	return false
+}
+
+func InitAlpm() {
+	pacmanConf, err := ParseConfig()
+	if err != nil {
+		log.Criticalln(err)
+		os.Exit(1)
+	}
+	handle, err = pacmanConf.CreateHandle()
+	if err != nil {
+		log.Criticalln(err)
+		os.Exit(1)
+	}
+	if err := InitPacmanDatabases(); err != nil {
+		log.Criticalln(err)
+		os.Exit(1)
+	}
 }
 
 func InitPacmanDatabases() error {

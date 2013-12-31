@@ -21,23 +21,6 @@ var (
 	localDb     *alpm.Db
 )
 
-func Init() {
-	pacmanConf, err := ParseConfig()
-	if err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
-	}
-	handle, err = pacmanConf.CreateHandle()
-	if err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
-	}
-	if err := InitPacmanDatabases(); err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
-	}
-}
-
 func CheckExternalPackages() {
 	packages := ExternalPackageList()
 
@@ -54,9 +37,7 @@ func CheckExternalPackages() {
 }
 
 func main() {
-	Init()
-
-	CheckExternalPackages()
+	InitAlpm()
 
 	if handle.Release() != nil {
 		log.Criticalln("Could not release libalpm!")
