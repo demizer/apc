@@ -10,9 +10,10 @@ package main
 
 import (
 	"github.com/demizer/go-alpm"
-	"github.com/demizer/go-elog"
 	"os"
 )
+
+const PACMAN_CONF_PATH = "/etc/pacman.conf"
 
 // An officially supported repository that would be found in pacman.conf.
 type OfficialDb int
@@ -61,64 +62,110 @@ func OfficialDbFromString(name string) OfficialDb {
 	return UnofficialDb
 }
 
-// Determines if the package is from an officially supported repo such as core,
-// extra, or community.
-func IsOfficialPackage(pkg alpm.Package) bool {
-	name := pkg.Name()
-	for _, db := range officialDbs {
-		if _, err := db.PkgByName(name); err == nil {
-			// TODO: Fix log to allow setting log level on
-			// default log!!
-			// log.Debugln("IsOfficialPackage():", name, "is from",
-			// db.Name())
-			return true
-		}
-	}
-	// log.Debugln("IsOfficialPackage():", name, "is NOT an official package")
-	return false
+// Alpm is the wrapper to libalpm. Create a new instance of Alpm with
+// NewAlpm(). The Alpm data type contains the handle to resource created by
+// libalpm. The handle must be released manually when no longer needed by
+// calling Alpm.Release().
+type Alpm struct {
+	handle      *alpm.Handle
+	pacmanConf  *alpm.PacmanConfig
+	officialDbs map[OfficialDb]alpm.Db
+	localDb     *alpm.Db
 }
 
-func InitAlpm() {
+
+// ParseConfig parses the pacman config if it exists and returns a PacmanConfig
+// object.
+func ParseConfig() (*alpm.PacmanConfig, error) {
+	fconf, err := os.Open(PACMAN_CONF_PATH)
+	if err != nil {
+		return nil, err
+	}
+	conf, err := alpm.ParseConfig(fconf)
+	if err != nil {
+		return nil, err
+	}
+	return &conf, nil
+}
+
+// Returns a new Alpm data type.
+func NewAlpm() (*Alpm, error) {
 	pacmanConf, err := ParseConfig()
 	if err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
+		return nil, err
 	}
-	handle, err = pacmanConf.CreateHandle()
+
+	handle, err := pacmanConf.CreateHandle()
+
+	a := &Alpm{handle: handle, pacmanConf: pacmanConf}
+
 	if err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
+		return nil, err
 	}
-	if err := InitPacmanDatabases(); err != nil {
-		log.Criticalln(err)
-		os.Exit(1)
+
+	if err := a.InitDatabases(); err != nil {
+		return nil, err
 	}
+
+	return a, nil
 }
 
-func InitPacmanDatabases() error {
-	dbs, err := handle.SyncDbs()
+// Free the handle to the libalpm resource when it is no longer needed.
+func (a *Alpm) Release() error {
+	err := a.handle.Release()
 	if err != nil {
-		return err
-	}
-	for _, db := range dbs.Slice() {
-		if odb := OfficialDbFromString(db.Name()); odb > UnofficialDb {
-			// log.Debugln("Detected official db:", odb)
-			officialDbs[odb] = db
-		}
-	}
-	if localDb, err = handle.LocalDb(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func ExternalPackageList() []alpm.Package {
+// Initializes the official libalpm package databases.
+func (a *Alpm) InitDatabases() error {
+	dbs, err := a.handle.SyncDbs()
+	if err != nil {
+		return err
+	}
+
+	a.officialDbs = make(map[OfficialDb]alpm.Db)
+
+	for _, db := range dbs.Slice() {
+		if odb := OfficialDbFromString(db.Name()); odb > UnofficialDb {
+			a.officialDbs[odb] = db
+		}
+	}
+
+	if a.localDb, err = a.handle.LocalDb(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Returns true if the package is from an officially supported repo such as
+// core, extra, or community.
+func (a *Alpm) IsOfficialPackage(pkg alpm.Package) bool {
+	name := pkg.Name()
+	for _, db := range a.officialDbs {
+		if _, err := db.PkgByName(name); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns true if the package is not in the official package databases.
+func (a *Alpm) IsExternalPackage(pkg alpm.Package) bool {
+	return !a.IsOfficialPackage(pkg)
+}
+
+// Returns a list of packages that are not found in the official Arch Linux
+// package databases.
+func (a *Alpm) ExternalPackageList() []alpm.Package {
 	pkgs := make([]alpm.Package, 0)
-	for _, pkg := range localDb.PkgCache().Slice() {
-		if !IsOfficialPackage(pkg) {
+	for _, pkg := range a.localDb.PkgCache().Slice() {
+		if a.IsExternalPackage(pkg) {
 			pkgs = append(pkgs, pkg)
 		}
 	}
 	return pkgs
 }
-

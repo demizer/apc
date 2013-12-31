@@ -33,19 +33,19 @@ type AurInfo struct {
 func AurChecker(job AurInfo, done chan<- bool) {
 	// log.Debugln("Receiving:", job.pkg.Name())
 	pInfo, err := aur.GetInfo(job.pkg.Name())
-	cName := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_WHITE,
-		job.pkg.Name(), log.ANSI_OFF)
+	cName := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_WHITE, job.pkg.Name(),
+		log.ANSI_OFF)
 	if err != nil {
-		mLabel := log.AnsiEscape(log.ANSI_BOLD,
-			log.ANSI_RED, "[MISSING]", log.ANSI_OFF)
+		mLabel := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_RED,
+			"[MISSING]", log.ANSI_OFF)
 		log.Println(mLabel, cName)
 		done <- true
 		return
 	}
 	if alpm.VerCmp(job.pkg.Version(), pInfo.Version) != 0 {
 		job.result = AUR_NEW_VERSION
-		nVerLabel := log.AnsiEscape(log.ANSI_BOLD,
-			log.ANSI_CYAN, "[NEW VERSION]", log.ANSI_OFF)
+		nVerLabel := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_CYAN,
+			"[NEW VERSION]", log.ANSI_OFF)
 		arrow := log.AnsiEscape(log.ANSI_BOLD, log.ANSI_RED, "=>",
 			log.ANSI_OFF)
 		log.Println(nVerLabel, cName, "("+job.pkg.Version(), arrow,
@@ -74,3 +74,17 @@ func AurCheckRunner(done chan bool, aChan chan AurInfo) {
 	}
 }
 
+func CheckExternalPackages(a *Alpm) {
+	packages := a.ExternalPackageList()
+
+	aChan := make(chan AurInfo)
+	done := make(chan bool, len(packages))
+
+	go AurCheckManager(packages, aChan)
+	go AurCheckRunner(done, aChan)
+
+	// Wait for all of the goroutines to post results
+	for i := 0; i < len(packages); i++ {
+		<-done // Blocks waiting for a receive (discards the value)
+	}
+}
