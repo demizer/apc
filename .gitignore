@@ -3,3 +3,4 @@ src/apc/apc
 pkg/linux_amd64/
 bin/apc
 tags
+apc.test
