@@ -10,6 +10,8 @@ package main
 
 import (
 	"github.com/demizer/go-alpm"
+	// "github.com/demizer/go-elog"
+	"fmt"
 	"os"
 )
 
@@ -161,7 +163,7 @@ func (a *Alpm) IsExternalPackage(pkg alpm.Package) bool {
 // Returns a list of packages that are not found in the official Arch Linux
 // package databases.
 func (a *Alpm) ExternalPackageList() []alpm.Package {
-	pkgs := make([]alpm.Package, 0)
+	var pkgs []alpm.Package
 	for _, pkg := range a.localDb.PkgCache().Slice() {
 		if a.IsExternalPackage(pkg) {
 			pkgs = append(pkgs, pkg)
@@ -169,3 +171,44 @@ func (a *Alpm) ExternalPackageList() []alpm.Package {
 	}
 	return pkgs
 }
+
+func (a *Alpm) InstalledPackages() []alpm.Package {
+	return a.localDb.PkgCache().Slice()
+}
+
+func (a *Alpm) SearchSyncDbsByName(name string) (*alpm.Package, error) {
+	var pkg *alpm.Package
+	var err error
+	for _, db := range a.officialDbs {
+		pkg, err =  db.PkgByName(name)
+		if err != nil {
+			continue
+		} else {
+			break
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("The package \"%s\" was not found in " +
+			"the sync databases.", name)
+	}
+	return pkg, nil
+}
+
+// type StalePackage struct {
+	// localPackage *alpm.Package
+	// syncPackage *alpm.Package
+// }
+
+// func (a *Alpm) StalePackages() ([]StalePackage, error) {
+	// var sPkgs []StalePackage
+	// for _, pkg := range a.InstalledPackages() {
+		// sPkg, err := a.SearchSyncDbsByName(pkg.Name())
+		// if err != nil {
+			// return nil, err
+		// }
+		// sPkgs = append(sPkgs, StalePackage{localPackage: &pkg,
+			// syncPackage: sPkg})
+		// // DO VERSION COMPARE HERE
+	// }
+	// return sPkgs, nil
+// }
