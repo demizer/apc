@@ -1,7 +1,7 @@
 ====================================
 Arch Package Companion Specification
 ====================================
-:Modified: Wed Jan 01 03:00 2014
+:Modified: Thu Jan 02 13:06 2014
 
 Arch Package Companion is a HTML5 application for managing packages in Arch
 Linux. APC incorporates the Arch User Repository and builds the packages in a
@@ -23,19 +23,19 @@ Requirements
 Overview
 ========
 
-* Not a pacman replacement
+* A pacman helper, not replacement.
 
-* Written in Go
+* Written in Go.
 
-* HTTPS for local network
+* HTTPS for local network.
 
-* AUR support
+* AUR support.
 
-* sqlite datastore
+* sqlite datastore.
 
-* system-d containers
+* system-d containers.
 
-* Test Driven Development
+* Test Driven Development.
 
 Architecture
 ============
@@ -73,23 +73,46 @@ allows for editing of PKGBUILDS in the browser.
 FEATURES
 --------
 
+Detailed below are the features that APC implements. They are ordered by
+importance.
+
+Security
+========
+
+* APC will not store passwords of any kind.
+
+* APC is a systemd controlled process run as root.
+
+* APC requires the root password for login.
+
+Datastore
+~~~~~~~~~
+
+* The sql data store is stored in "/var/cache/pacman" with 755 permissions.
+
+* The APC configuration file is stored at "/etc/apc/conf"
+
+HTTPS
+~~~~~
+
+* By default, APC only accepts connections from the local network.
+
+* The server must use HTTPS for security (local network focus)
+
+* The key and certificate should be self signed and kept in "/etc/apc/certs"
+
 sqlite Datastore
 ================
 
-* Clear text file?
+* The sqlite database will be saved to "~/var/cache/apc".
 
-* The sqlite database will be saved to "~/.config/apc".
+* Clear text file.
 
 * The database will contain all package sources downloaded from AUR, as well as
   previous versions.
 
 * Settings are stored in the database and configurable in the web app.
 
-HTTPS
-=====
-
-* The server must use HTTPS for security (local network focus)
-  
 Package Management
 ==================
 
@@ -107,6 +130,8 @@ Editing
   packages.
 
 * APC can be configured to use a built in colorized text editor.
+
+* An external editor can be used for diff merging (vimdiff)
 
 Installing or Updating
 ----------------------
