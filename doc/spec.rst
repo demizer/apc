@@ -1,7 +1,7 @@
 ====================================
 Arch Package Companion Specification
 ====================================
-:Modified: Fri Jan 03 01:30 2014
+:Modified: Fri Jan 03 11:59:27 PDT 2014
 
 Arch Package Companion is a HTML5 application for managing packages in Arch
 Linux. APC incorporates the Arch User Repository and builds the packages in a
@@ -19,6 +19,8 @@ INBOX
 * Add automatic AUR updates to feature overview.
 
 * Add process output display to feature overview.
+
+* Add chroot management to the feature list.
 
 ------------
 Requirements
@@ -181,23 +183,49 @@ Sqlite Datastore
 * The database will contain all package sources downloaded from AUR, as well as
   previous versions.
 
-Package Management
-==================
+User Interface
+==============
 
-* Package status is shown on the UI at all times (in the topbar).
+APC uses the AngularJS framework for displaying the user interface on the
+client side. The client uses the RestAPI of the APC server. The CSS framework
+is provided by Angular-Bootstrap.
+
+* http://angularjs.org/
+* http://www.thinkster.io/
+* https://www.ng-book.com/
+* http://angular-ui.github.io/bootstrap/
+
+Authentication
+--------------
+
+When the user activates the APC application using the commandline or desktop
+link, APC asks for root permissions using gksudo. When the browser containing
+the APC application is closed, the APC process is terminated.
+
+The apc-sync tool should be run as a root cron job.
 
 Process Output Display
 ----------------------
 
-* Travis CI like worker output display.
+Whenever APC uses shell commands, the output should be displayed in the
+browser. This feature is similar to the output displayed by Travis Ci.
 
 Search
 ------
 
-* A search bar is displayed on the UI at all times (above the package list).
+A search bar is displayed on the UI at all times (above the package list).
+
+Package Statistics
+------------------
+
+Package status is shown on the UI at all times (in the topbar).
 
 Editing
--------
+=======
+
+For local PKGBUILDS, or packages retrieved from AUR, the application should
+allow for quick edits using a built in editor. The default editor of the host
+can also be used if the user wishes.
 
 * The editor specified in the $EDITOR environment variable is used to edit AUR
   packages.
@@ -207,7 +235,7 @@ Editing
 * An external editor can be used for diff merging (vimdiff)
 
 Syntax Coloring
-~~~~~~~~~~~~~~~
+---------------
 
 * A syntax coloring library is used for displaying UI such as package diffs or
   colorized console output.
@@ -218,15 +246,21 @@ Syntax Coloring
 * For implementing this in Go, a pygments type library must be found or
   created.
 
+Package Management
+==================
+
 Installing or Updating
 ----------------------
 
-* Packages that are to be installed or updated are deferred to pacman.
+Packages that are to be installed or updated are deferred to pacman.
 
 AUR
 ---
 
-* Integrated into package search
+Integration with AUR is a highlight feature of APC, and mostly the reason for
+its existence.
+
+* Integrated into the search feature.
 
 * Automatic updates (configurable, not default)
 
@@ -234,8 +268,13 @@ AUR
 
 * Build packages in container.
 
-Repo Management
-===============
+Local Repositories
+------------------
+
+TODO
+
+Systemd Container Management
+============================
 
 TODO
 
