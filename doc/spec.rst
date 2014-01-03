@@ -1,16 +1,12 @@
 ====================================
 Arch Package Companion Specification
 ====================================
-:Modified: Thu Jan 02 15:35 2014
+:Modified: Thu Jan 02 23:49 2014
 
 Arch Package Companion is a HTML5 application for managing packages in Arch
 Linux. APC incorporates the Arch User Repository and builds the packages in a
 systemd container. APC shows the user up-to-date information about the package
 state of the host system in a clean HTML5 interface.
-
---------
-Overview
---------
 
 -----
 INBOX
