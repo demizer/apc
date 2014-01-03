@@ -1,7 +1,7 @@
 ====================================
 Arch Package Companion Specification
 ====================================
-:Modified: Thu Jan 02 23:49 2014
+:Modified: Thu Jan 02 23:53 2014
 
 Arch Package Companion is a HTML5 application for managing packages in Arch
 Linux. APC incorporates the Arch User Repository and builds the packages in a
@@ -19,19 +19,19 @@ Requirements
 Overview
 ========
 
-* A pacman helper, not replacement.
+* A frontend to Pacman with AUR support
 
-* Written in Go.
+* Automatic package database sync
 
-* HTTPS for local network.
+* HTML5 application written in Go
 
-* AUR support.
+* Secure HTTPS connection
 
-* sqlite datastore.
+* sqlite datastore
 
-* system-d containers.
+* system-d build containers
 
-* Test Driven Development.
+* Test Driven Development
 
 Architecture
 ============
